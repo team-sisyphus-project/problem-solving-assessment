@@ -10,7 +10,7 @@
  */
 
 import { FLOW_STEPS, stepStatus, type StepId } from "../flow";
-import { strings } from "../strings";
+import { strings } from "../i18n";
 
 interface StepNavProps {
   /** 현재 단계 id */

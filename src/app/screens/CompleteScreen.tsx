@@ -7,7 +7,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { FIRST_STEP_PATH } from "../flow";
-import { strings } from "../strings";
+import { strings } from "../i18n";
 
 export function CompleteScreen() {
   const navigate = useNavigate();

@@ -8,7 +8,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { nextStepPath } from "../flow";
-import { strings } from "../strings";
+import { strings } from "../i18n";
 
 export function StartScreen() {
   const navigate = useNavigate();

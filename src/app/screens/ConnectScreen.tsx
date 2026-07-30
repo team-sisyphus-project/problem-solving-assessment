@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { nextStepPath, prevStepPath } from "../flow";
-import { strings } from "../strings";
+import { strings } from "../i18n";
 
 type ProviderId = keyof typeof strings.providers;
 

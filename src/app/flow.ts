@@ -13,7 +13,7 @@
  * ---------------------------------------------------------------------------
  */
 
-import { strings } from "./strings";
+import { strings } from "./i18n";
 
 export type StepId = "start" | "connect" | "solve" | "complete";
 

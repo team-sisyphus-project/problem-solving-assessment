@@ -13,7 +13,7 @@
 
 import { Outlet, useLocation } from "react-router-dom";
 import { FLOW_STEPS } from "../flow";
-import { strings } from "../strings";
+import { strings } from "../i18n";
 import { StepNav } from "./StepNav";
 
 export function AppShell() {
