@@ -1,0 +1,104 @@
+/*
+ * App-shell — 레이아웃 셸 (framework-agnostic 클래스)
+ * ---------------------------------------------------------------------------
+ * Spec: components/app-shell/base.md
+ * 지원자 응시 화면을 감싸는 최상위 프레임: 헤더 + 메인 아웃렛 + 콘텐츠 컨테이너.
+ * 흐름 단계가 바뀌어도 변하지 않는 공통 골격이며 화면 전환의 기본 뼈대다.
+ *
+ * 모든 디자인 값(색·서체·간격·경계·폭)은 tokens.css의 var(--token)만 참조한다
+ * (하드코딩 0). 구조/겹침 값(display·flex·position·min-height·z-index)은
+ * coding.md의 "구현 설정값"이라 리터럴을 쓴다 — 하드코딩 위반 아님.
+ * ---------------------------------------------------------------------------
+ */
+
+/* 최소 리셋 — 기본 여백 제거(구조값)·문서 배경을 셸 배경(surface-subtle)과 통일 */
+html,
+body {
+  margin: 0;
+}
+body {
+  background-color: var(--surface-subtle);
+}
+
+/* 셸 루트: 전체 뷰포트를 채우고 헤더·아웃렛·오버레이를 세로로 쌓는다 */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 구조값 */
+  background-color: var(--surface-subtle);
+  font-family: var(--font-family-base);
+  color: var(--text-default);
+}
+
+/* 헤더(상단 바): 제품 식별 + 현재 맥락 + 단계 표시자(navigation) 자리 */
+.app-shell__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+
+  background-color: var(--surface-base);
+  padding: var(--space-sm) var(--space-lg);
+
+  /* 헤더 하단 구분선 — 두께(border) + 색(color) */
+  border-bottom-style: solid;
+  border-bottom-width: var(--border-width-sm);
+  border-bottom-color: var(--border-subtle);
+}
+
+/* 제품/맥락 텍스트 묶음 */
+.app-shell__brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  min-width: 0; /* 구조값 — 축소 허용 */
+}
+
+.app-shell__product {
+  font-size: var(--text-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+.app-shell__context {
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  color: var(--text-muted);
+}
+
+/* 메인 아웃렛: 흐름 단계별 화면이 교체되어 렌더되는 영역 */
+.app-shell__main {
+  flex: 1 1 auto; /* 구조값 */
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+/* 콘텐츠 컨테이너: 최대 폭 제한 + 가운데 정렬 + 좌우 gutter */
+.app-shell__container {
+  max-width: var(--container-width-md); /* 기본: 집중 흐름 폭 */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+}
+
+/* 문제 풀이(채팅) 등 넓은 폭이 필요한 화면 */
+.app-shell__container--wide {
+  max-width: var(--container-width-lg);
+}
+
+/*
+ * 오버레이 레이어: 모달·토스트가 셸 위로 떠오르는 최상위 스택 자리.
+ * 셸은 "떠오를 자리"만 보장하고, 스크림 색(color/overlay-scrim)과
+ * 엘리베이션(shadow)은 각 프리미티브(modal·toast)가 선언한다.
+ * z-index(겹침 값)는 구현 설정값이라 Token화하지 않는다(app-shell base 규칙).
+ */
+.app-shell__overlay {
+  position: fixed; /* 구조값 */
+  inset: 0; /* 구조값 */
+  z-index: 1000; /* 구현 설정값 — 콘텐츠 위 최상위 */
+  pointer-events: none; /* 구조값 — 자식(모달/토스트)만 상호작용 */
+}

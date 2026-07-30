@@ -11,8 +11,9 @@
  *   - typography:   $GENOSIS_SPEC_PATH/token-groups/typography/base.md
  *   - spacing:      $GENOSIS_SPEC_PATH/token-groups/spacing/base.md
  *   - radius:       $GENOSIS_SPEC_PATH/token-groups/radius/base.md
- *   - border-width: $GENOSIS_SPEC_PATH/token-groups/border-width/base.md
+ *   - border:       $GENOSIS_SPEC_PATH/token-groups/border/base.md
  *   - shadow:       $GENOSIS_SPEC_PATH/token-groups/shadow/base.md
+ *   - sizing:       $GENOSIS_SPEC_PATH/token-groups/sizing/base.md
  *
  * 네이밍은 convention.md의 시맨틱 역할 기반 패턴을 따른다. 토큰 이름에는
  * 특정 컴포넌트 고유명을 넣지 않는다.
@@ -152,4 +153,15 @@
   --shadow-md: 0 4px 8px rgba(17, 24, 39, 0.08);
   --shadow-lg: 0 10px 24px rgba(17, 24, 39, 0.12);
   --shadow-xl: 0 20px 48px rgba(17, 24, 39, 0.16);
+
+  /* =======================================================================
+   * SIZING — 고정 레이아웃 치수만 담당 (콘텐츠 컨테이너 최대 폭)
+   * spacing 간격 스케일로 표현되지 않는 절대 치수. 여러 흐름 화면이 공유하는
+   * 읽기 폭(measure)을 고정해 화면마다 콘텐츠가 제각각 늘어나지 않게 한다.
+   * Spec: token-groups/sizing/base.md. 기준 1rem = 16px.
+   * ======================================================================= */
+
+  --container-width-sm: 30rem; /* 480px — 가장 좁은 읽기 폭 */
+  --container-width-md: 40rem; /* 640px — 집중 흐름(시작·연결·완료) 기준 폭 */
+  --container-width-lg: 60rem; /* 960px — 문제 풀이(채팅) 넓은 폭 */
 }
