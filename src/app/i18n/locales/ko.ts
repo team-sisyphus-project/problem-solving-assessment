@@ -34,24 +34,19 @@ export const ko = {
 
   /** 흐름 각 단계의 화면 문구 */
   screens: {
-    start: {
-      stepLabel: "시작·안내",
-      title: "응시를 시작합니다",
+    verify: {
+      stepLabel: "본인 확인",
+      title: "본인 확인 후 응시를 시작합니다",
       description:
-        "무작위로 출제되는 문제를 화면 안의 대화형 AI와 함께 풀어 제출합니다. 준비가 되면 아래에서 시작하세요.",
-      primaryAction: "응시 시작",
+        "별도 회원가입이나 로그인 없이, 이름과 이메일 등 최소 정보로 본인을 확인하면 바로 응시가 시작됩니다. 입력 폼은 다음 단계에서 배선됩니다.",
+      primaryAction: "본인 확인하고 시작하기",
     },
-    connect: {
-      stepLabel: "LLM 연결·선택",
-      title: "사용할 AI를 선택하세요",
+    brief: {
+      stepLabel: "문제 안내",
+      title: "배정된 문제를 확인하세요",
       description:
-        "본인이 사용하는 AI 계정을 직접 연결해 응시합니다(BYOP). 플랫폼은 키를 대신 보유하지 않습니다. 연결 방식의 세부 UI는 다음 단계에서 배선됩니다.",
-      /** 제공자 선택 자리(M-5) — 실제 키 연동 로직은 범위 밖 */
-      providerLegend: "AI 제공자",
-      providerHint: "하나를 선택하면 연결 자리로 이동합니다.",
-      selectedPrefix: "선택됨:",
-      noneSelected: "아직 선택하지 않았습니다.",
-      primaryAction: "연결하고 계속",
+        "본인에게 무작위로 배정된 문제 1건이 여기에 안내됩니다. 문제 상세 표시는 다음 단계에서 배선됩니다. 준비가 되면 풀이를 시작하세요.",
+      primaryAction: "풀이 시작",
       backAction: "이전",
     },
     solve: {

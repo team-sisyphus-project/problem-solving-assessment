@@ -23,17 +23,15 @@
  */
 
 import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath, prevStepPath } from "../flow";
 import { strings } from "../i18n";
-
-type MessageRole = "applicant" | "ai";
-
-interface ChatMessage {
-  id: number;
-  role: MessageRole;
-  text: string;
-}
+import {
+  appendMessage,
+  getOrCreateSession,
+  markSubmitted,
+  type ChatMessage,
+} from "../session/store";
 
 type ProviderId = keyof typeof strings.providers;
 
@@ -41,19 +39,21 @@ const PROVIDER_IDS = Object.keys(strings.providers) as ProviderId[];
 
 export function SolveScreen() {
   const navigate = useNavigate();
+  const { token = "" } = useParams();
   const s = strings.screens.solve;
 
   // 활성 AI 제공자(M-5) — 참조 화면 안에서 직접 선택. 선택 전에는 무채색 유지
   // (provider-group 원칙 2), 선택된 하나만 accent로 승격(원칙 3).
   const [provider, setProvider] = useState<ProviderId | null>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // 대화 로그는 토큰 세션 스토어가 원본(source of truth) — 진입 시 기존 로그를
+  // 불러오고, 전송마다 스토어에 append 후 화면 상태를 동기화한다(토큰별 영속).
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    () => getOrCreateSession(token).messages,
+  );
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
 
-  // 메시지 id 시퀀스 — 렌더 순수성 유지를 위해 ref 카운터로 발급.
-  const seq = useRef(0);
-  const nextId = () => (seq.current += 1);
   // stub 응답 타이머 — 언마운트 시 정리.
   const replyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -66,18 +66,23 @@ export function SolveScreen() {
     const text = draft.trim();
     if (!text || pending || provider === null) return;
 
-    setMessages((prev) => [...prev, { id: nextId(), role: "applicant", text }]);
+    // 지원자 발화를 스토어에 기록(순서·시각 포함) 후 화면 동기화.
+    setMessages(appendMessage(token, "applicant", text).messages);
     setDraft("");
     setPending(true);
 
-    // stub: 잠시 뒤 AI 응답 버블을 추가하고 대기 표시를 해제(로컬 시연).
+    // stub: 잠시 뒤 AI 응답 버블을 스토어에 추가하고 대기 표시를 해제(로컬 시연).
     replyTimer.current = setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { id: nextId(), role: "ai", text: s.stubReply },
-      ]);
+      setMessages(appendMessage(token, "ai", s.stubReply).messages);
       setPending(false);
     }, 700);
+  }
+
+  // 제출 — 대화 로그와 제출 시각을 스토어에 확정(M-4)하고 완료 화면으로 전진.
+  // 제출 확인 모달은 후속 grain(여기서는 최소 배선만).
+  function handleSubmit() {
+    markSubmitted(token);
+    navigate(nextStepPath(token, "solve")!);
   }
 
   return (
@@ -189,15 +194,11 @@ export function SolveScreen() {
         <button
           type="button"
           className="btn btn--low-emphasis"
-          onClick={() => navigate(prevStepPath("solve")!)}
+          onClick={() => navigate(prevStepPath(token, "solve")!)}
         >
           {s.backAction}
         </button>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => navigate(nextStepPath("solve")!)}
-        >
+        <button type="button" className="btn" onClick={handleSubmit}>
           {s.primaryAction}
         </button>
       </div>

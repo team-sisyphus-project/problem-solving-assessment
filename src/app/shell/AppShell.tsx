@@ -11,17 +11,25 @@
  * ---------------------------------------------------------------------------
  */
 
-import { Outlet, useLocation } from "react-router-dom";
-import { FLOW_STEPS } from "../flow";
+import { Outlet, useLocation, useParams } from "react-router-dom";
+import { FLOW_STEPS, INVITE_BASE, stepIdFromSegment } from "../flow";
 import { strings } from "../i18n";
+import { getOrCreateSession } from "../session/store";
 import { StepNav } from "./StepNav";
 
 export function AppShell() {
   const { pathname } = useLocation();
+  const { token = "" } = useParams();
 
-  // 현재 경로에 해당하는 흐름 단계. 매칭이 없으면 첫 단계로 간주(방어적).
+  // 토큰 첫 접근 시점에 세션을 확보(배정 문제 고정 등). 이후 화면들이 재사용.
+  getOrCreateSession(token);
+
+  // 현재 경로 조각(토큰 베이스 이후)에서 흐름 단계를 파생. 매칭 없으면 첫 단계.
+  const base = `${INVITE_BASE}/${token}`;
+  const segment = pathname.startsWith(base) ? pathname.slice(base.length) : "";
+  const currentStepId = stepIdFromSegment(segment);
   const currentStep =
-    FLOW_STEPS.find((s) => s.path === pathname) ?? FLOW_STEPS[0];
+    FLOW_STEPS.find((s) => s.id === currentStepId) ?? FLOW_STEPS[0];
 
   // 문제 풀이(채팅)만 넓은 콘텐츠 폭을 쓴다(app-shell base: md~lg).
   const isWide = currentStep.id === "solve";
