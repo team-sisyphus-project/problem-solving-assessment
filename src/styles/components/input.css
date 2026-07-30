@@ -1,0 +1,101 @@
+/*
+ * Input — 프리미티브 (framework-agnostic)
+ * ---------------------------------------------------------------------------
+ * Spec: components/input/base.md
+ * 단일 라인 폼 컨트롤. 상태: 기본 / 포커스 / 오류 / 비활성.
+ * 색 단독 전달 금지 — 오류는 border + 오류 메시지를 함께 노출한다.
+ * 모든 디자인 값은 var(--token)만 참조(하드코딩 0).
+ *
+ * 사용:
+ *   <div class="input-field">
+ *     <label class="input-field__label">레이블</label>
+ *     <input class="input" placeholder="예시" />
+ *     <p class="input-field__helper">보조 안내</p>
+ *   </div>
+ *   오류: .input--error + <p class="input-field__error">…</p>
+ * ---------------------------------------------------------------------------
+ */
+
+/* 레이블·필드·메시지를 세로로 묶는 래퍼 */
+.input-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.input-field__label {
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  color: var(--text-strong);
+}
+
+/* 입력 필드 본체 */
+.input {
+  /* 구조 */
+  box-sizing: border-box;
+  width: 100%;
+  appearance: none;
+  transition: border-color 0.15s ease;
+
+  /* 간격 */
+  padding: var(--space-xs) var(--space-sm);
+
+  /* 서체 */
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--text-default);
+
+  /* 모서리 */
+  border-radius: var(--radius-md);
+
+  /* 경계 + 표면 색 */
+  border-style: solid;
+  border-width: var(--border-width-sm);
+  border-color: var(--border-default);
+  background-color: var(--surface-base);
+}
+
+.input::placeholder {
+  color: var(--text-subtle);
+}
+
+.input:focus,
+.input:focus-visible {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  background-color: var(--surface-subtle);
+  border-color: var(--border-subtle);
+  color: var(--text-subtle);
+}
+
+/* 오류 상태 — 색 + 메시지 병행 */
+.input--error,
+.input--error:focus,
+.input--error:focus-visible {
+  border-color: var(--status-error);
+}
+
+/* 보조 메시지 */
+.input-field__helper {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--text-muted);
+}
+
+.input-field__error {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--status-error);
+}

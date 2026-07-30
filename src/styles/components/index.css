@@ -1,0 +1,17 @@
+/*
+ * Component primitives — 배럴(barrel)
+ * ---------------------------------------------------------------------------
+ * 6종 공용 프리미티브를 한 번에 불러온다. 토큰 정의(tokens.css)를 먼저
+ * 로드한 뒤 이 파일을 로드하면 모든 프리미티브 클래스를 쓸 수 있다.
+ *   @import "../tokens.css";
+ *   @import "./index.css";
+ * (각 프리미티브의 스타일 값은 tokens.css의 var(--token)에만 의존한다.)
+ * ---------------------------------------------------------------------------
+ */
+
+@import "./button.css";
+@import "./input.css";
+@import "./modal.css";
+@import "./empty-state.css";
+@import "./loading.css";
+@import "./toast.css";
