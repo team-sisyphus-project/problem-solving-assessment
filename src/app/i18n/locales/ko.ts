@@ -38,8 +38,24 @@ export const ko = {
       stepLabel: "본인 확인",
       title: "본인 확인 후 응시를 시작합니다",
       description:
-        "별도 회원가입이나 로그인 없이, 이름과 이메일 등 최소 정보로 본인을 확인하면 바로 응시가 시작됩니다. 입력 폼은 다음 단계에서 배선됩니다.",
+        "별도 회원가입이나 로그인 없이, 이름과 이메일만 입력해 본인을 확인하면 바로 응시가 시작됩니다.",
+      /** 폼 필드 — 이름 */
+      nameLabel: "이름",
+      namePlaceholder: "예: 홍길동",
+      /** 폼 필드 — 이메일 */
+      emailLabel: "이메일",
+      emailPlaceholder: "예: hong@example.com",
+      /** 폼 하단 안내(helper) — 정보 사용 목적 */
+      formHint: "입력하신 정보는 응시 확인 용도로만 사용됩니다.",
       primaryAction: "본인 확인하고 시작하기",
+      /** 로컬 검증 오류 메시지(색 단독 금지 — 메시지 병행, 원칙 2) */
+      errorNameRequired: "이름을 입력해 주세요.",
+      errorEmailRequired: "이메일을 입력해 주세요.",
+      errorEmailInvalid: "올바른 이메일 형식으로 입력해 주세요.",
+      /** 제출 후 재응시 잠금 안내(empty-state 재사용, SC-4/M-5) */
+      lockTitle: "이미 제출된 응시입니다",
+      lockDescription:
+        "이 초대 링크로는 이미 응시가 제출되어 다시 응시할 수 없습니다. 제출한 내용은 담당자가 검토합니다.",
     },
     brief: {
       stepLabel: "문제 안내",

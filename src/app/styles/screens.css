@@ -24,6 +24,16 @@
   gap: var(--space-sm);
 }
 
+/* 본인 확인 폼(verify) — 입력 필드(.input-field)를 세로로 쌓는 집중 입력 폭.
+   필드 사이 간격·읽기 폭은 토큰 참조, display/flex 등 구조값만 리터럴이다. */
+.verify-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  max-width: var(--container-width-sm); /* sizing: 가장 좁은 읽기 폭(집중 입력) */
+}
+
 /* 제공자 선택 그룹(M-5) — GPT/Claude/Gemini 선택 자리 */
 .provider-group {
   display: flex;
