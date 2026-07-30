@@ -57,8 +57,19 @@ export const strings = {
         "아래 대화형 AI와 함께 문제를 풀어 나가세요. 주고받은 대화 로그가 담당자의 평가 자료가 됩니다.",
       primaryAction: "제출",
       backAction: "이전",
-      /** 활성 AI 제공자 표시(M-5) — 상시 노출되는 맥락(ambient status) */
-      activeProviderLabel: "응답 AI",
+      /** 제공자 선택 슬롯(M-5) — 참조 화면 안에서 응답 AI를 고르는 자리.
+       * 실제 키 연동 로직은 범위 밖(BYOP 연결 자리는 placeholder). */
+      providerLegend: "응답 AI 선택",
+      providerHint:
+        "GPT · Claude · Gemini 중 하나로 응시합니다. 선택하면 아래 대화가 그 AI로 응답합니다.",
+      providerSelectedPrefix: "선택됨:",
+      providerNoneSelected: "아직 선택하지 않았습니다.",
+      /** 연결 자리(BYOP placeholder) — 실제 키 로직 없음, 예약된 자리만 노출 */
+      connectSlotTitle: "연결 자리 (BYOP)",
+      connectSlotHintNone:
+        "제공자를 선택하면 본인 AI 계정을 연결하는 자리가 여기에 준비됩니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      connectSlotHintSuffix:
+        "계정 연결 자리입니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
       /** 대화 시작 전 빈 상태(empty-state 재사용) */
       emptyTitle: "대화를 시작해 보세요",
       emptyDescription:
@@ -72,6 +83,8 @@ export const strings = {
       composerPlaceholder: "메시지를 입력하세요",
       composerHint:
         "전송하면 선택한 AI가 응답합니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      /** 제공자 미선택 시 전송 비활성 안내 */
+      composerHintNoProvider: "먼저 위에서 응답 AI를 선택하세요.",
       sendAction: "전송",
       /** stub 응답 — 실제 LLM 연동 없이 흐름만 시연하는 임시 문구 */
       stubReply:
