@@ -1,0 +1,77 @@
+/*
+ * Loading — 프리미티브 (framework-agnostic)
+ * ---------------------------------------------------------------------------
+ * Spec: components/loading/base.md
+ * 진행/대기 표시. 스피너(인디케이터) + 스켈레톤(자리표시)을 함께 다룬다.
+ * 강조색은 인디케이터에만 아껴 쓰고, 스켈레톤은 무채색으로.
+ * 모든 디자인 값은 var(--token)만 참조(하드코딩 0).
+ * 크기/애니메이션 타이밍은 구현 설정값(토큰 아님).
+ *
+ * 사용:
+ *   <div class="loading">
+ *     <span class="spinner" role="status" aria-label="로딩 중"></span>
+ *     <span class="loading__text">응답을 생성하고 있습니다…</span>
+ *   </div>
+ *   스켈레톤: <div class="skeleton"></div>
+ * ---------------------------------------------------------------------------
+ */
+
+/* 인디케이터 + 문구를 묶는 래퍼 */
+.loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* 스피너 — 트랙(border-subtle) 위에 accent 아크가 회전 */
+.spinner {
+  display: inline-block;
+  box-sizing: border-box;
+  /* 지름/두께: 스케일 토큰으로 크기 지정 */
+  width: var(--space-lg);
+  height: var(--space-lg);
+
+  border-style: solid;
+  border-width: var(--border-width-md);
+  border-color: var(--border-subtle);
+  border-top-color: var(--accent-default);
+  border-radius: var(--radius-full);
+
+  /* 회전 (구현 설정값 — 토큰 아님) */
+  animation: spinner-spin 0.7s linear infinite;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 안내 문구 */
+.loading__text {
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--text-muted);
+}
+
+/* 스켈레톤 블록 — 로드될 콘텐츠 자리 점유. 무채색 두 단계로 은은히 펄스 */
+.skeleton {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-muted);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* 여러 스켈레톤을 쌓을 때의 간격 */
+.skeleton + .skeleton {
+  margin-top: var(--space-sm);
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    background-color: var(--surface-subtle);
+  }
+}

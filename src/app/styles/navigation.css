@@ -1,0 +1,108 @@
+/*
+ * Navigation — 단계 표시자(stepper) (framework-agnostic 클래스)
+ * ---------------------------------------------------------------------------
+ * Spec: components/navigation/base.md
+ * 지원자 선형 응시 흐름에서 현재 위치와 전체 4단계를 보여준다. app-shell
+ * 헤더에 배치된다. 완료/현재/예정 상태를 색 단독이 아니라 형태(채움 vs 외곽선
+ * 배지)·번호·레이블로 병행 표현한다(design-principles 원칙 2). 현재 단계 하나만
+ * 강조한다(원칙 3).
+ *
+ * 모든 디자인 값은 var(--token)만 참조(하드코딩 0). display/flex 등 구조값만 리터럴.
+ * ---------------------------------------------------------------------------
+ */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 단계 항목: 번호 배지 + 레이블 */
+.stepper__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+/* 번호 배지 — 원형(radius-full) */
+.stepper__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-lg); /* 24px — 배지 지름 */
+  height: var(--space-lg);
+  box-sizing: border-box;
+  border-radius: var(--radius-full);
+  border-style: solid;
+  border-width: var(--border-width-sm);
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
+/* 레이블 */
+.stepper__label {
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+/* 진행 연결선 — 항목 사이를 잇는 선(선택 구성 요소) */
+.stepper__connector {
+  flex: 0 0 var(--space-lg); /* 구조값 — 연결선 길이 */
+  height: var(--border-width-md); /* 연결선 두께(border) */
+  border-radius: var(--radius-full);
+}
+
+/* ---- 상태: 완료(done) — accent 채움 배지 + 완료 연결선 ---- */
+.stepper__item--done .stepper__badge {
+  background-color: var(--accent-default);
+  border-color: var(--accent-default);
+  color: var(--text-on-accent);
+}
+.stepper__item--done .stepper__label {
+  color: var(--text-default);
+}
+.stepper__connector--done {
+  background-color: var(--accent-default);
+}
+
+/* ---- 상태: 현재(current) — accent 채움 배지 + 강조 레이블(semibold) ---- */
+.stepper__item--current .stepper__badge {
+  background-color: var(--accent-default);
+  border-color: var(--accent-default);
+  color: var(--text-on-accent);
+}
+.stepper__item--current .stepper__label {
+  color: var(--text-strong);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---- 상태: 예정(upcoming) — 외곽선 배지(채움 없음) + 은은한 레이블 ---- */
+.stepper__item--upcoming .stepper__badge {
+  background-color: var(--surface-base);
+  border-color: var(--border-subtle);
+  color: var(--text-subtle);
+}
+.stepper__item--upcoming .stepper__label {
+  color: var(--text-subtle);
+}
+.stepper__connector--upcoming {
+  background-color: var(--border-subtle);
+}
+
+/* 색만으로 구분하지 않도록 상태 텍스트를 시각적으로 감춰 스크린리더에 제공 */
+.stepper__status-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

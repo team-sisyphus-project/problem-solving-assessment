@@ -1,0 +1,119 @@
+/*
+ * Button — 프리미티브 (framework-agnostic)
+ * ---------------------------------------------------------------------------
+ * Spec: components/button/{base,secondary,low-emphasis}.md
+ * 클릭 가능한 액션 컨트롤. 위계: primary(=.btn) > secondary > low-emphasis.
+ * 모든 디자인 값은 tokens.css의 var(--token)만 참조한다(하드코딩 0).
+ * 값이 아닌 구조(display/cursor/transition 등)만 리터럴을 쓴다.
+ *
+ * 사용:
+ *   <button class="btn">주요 액션</button>
+ *   <button class="btn btn--secondary">보조</button>
+ *   <button class="btn btn--low-emphasis">취소</button>
+ *   아이콘: <span class="btn__icon">…</span> 를 레이블 앞/뒤에 둔다.
+ * ---------------------------------------------------------------------------
+ */
+
+.btn {
+  /* 구조 (구현 설정값 — 토큰 아님) */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+  /* 간격 (spacing) */
+  gap: var(--space-2xs);
+  padding: var(--space-xs) var(--space-md);
+
+  /* 서체 (typography) */
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+
+  /* 모서리 (radius) */
+  border-radius: var(--radius-md);
+
+  /* 경계 (border-width + color) — Base는 채움이라 경계는 투명 */
+  border-style: solid;
+  border-width: var(--border-width-sm);
+  border-color: transparent;
+
+  /* 색 (color) — primary: accent 채움 */
+  background-color: var(--accent-default);
+  color: var(--text-on-accent);
+}
+
+.btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn:active {
+  background-color: var(--accent-active);
+}
+
+.btn:focus-visible {
+  outline: var(--border-width-md) solid var(--border-focus);
+  outline-offset: var(--space-3xs);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  cursor: not-allowed;
+  background-color: var(--surface-muted);
+  border-color: transparent;
+  color: var(--text-subtle);
+}
+
+/* ---- Variant: secondary — 무채색 표면 + 경계선, 대비를 낮춘 부차 액션 ---- */
+.btn--secondary {
+  background-color: var(--surface-base);
+  border-color: var(--border-default);
+  color: var(--text-default);
+}
+
+.btn--secondary:hover {
+  background-color: var(--surface-subtle);
+}
+
+.btn--secondary:active {
+  background-color: var(--surface-muted);
+}
+
+.btn--secondary:disabled,
+.btn--secondary[aria-disabled="true"] {
+  background-color: var(--surface-subtle);
+  border-color: var(--border-subtle);
+  color: var(--text-subtle);
+}
+
+/* ---- Variant: low-emphasis — 표면/경계 없이 텍스트만, 가장 낮은 무게 ---- */
+.btn--low-emphasis {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-default);
+}
+
+.btn--low-emphasis:hover {
+  background-color: var(--surface-subtle);
+}
+
+.btn--low-emphasis:active {
+  background-color: var(--surface-muted);
+}
+
+.btn--low-emphasis:disabled,
+.btn--low-emphasis[aria-disabled="true"] {
+  background-color: transparent;
+  color: var(--text-subtle);
+}

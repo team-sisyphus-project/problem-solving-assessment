@@ -1,0 +1,93 @@
+/*
+ * Toast — 프리미티브 (framework-agnostic)
+ * ---------------------------------------------------------------------------
+ * Spec: components/toast/base.md
+ * 흐름을 막지 않고 잠깐 떠올라 짧은 피드백을 전하는 비차단 알림.
+ * success / warning / error / info 네 의미는 color status-* + status-*-subtle
+ * + 상태 아이콘 + 텍스트로 함께 전달(색 단독 전달 금지).
+ * 모든 디자인 값은 var(--token)만 참조(하드코딩 0).
+ *
+ * 사용:
+ *   <div class="toast toast--success" role="status">
+ *     <span class="toast__icon">…</span>
+ *     <span class="toast__message">저장되었습니다</span>
+ *     <button class="btn btn--low-emphasis toast__action">실행취소</button>
+ *   </div>
+ *   상태 클래스: toast--success | toast--warning | toast--error | toast--info
+ * ---------------------------------------------------------------------------
+ */
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+
+  font-family: var(--font-family-base);
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-default);
+
+  background-color: var(--surface-base);
+  border-radius: var(--radius-md);
+
+  /* 좌측 상태 강조 막대 + 은은한 경계 */
+  border-style: solid;
+  border-width: var(--border-width-sm);
+  border-color: var(--border-subtle);
+  border-left-width: var(--border-width-md);
+  border-left-color: var(--border-subtle);
+
+  /* 엘리베이션 */
+  box-shadow: var(--shadow-lg);
+}
+
+.toast__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.toast__message {
+  flex: 1 1 auto;
+}
+
+.toast__action {
+  flex: none;
+}
+
+/* ---- 상태별: 좌측 막대·아이콘은 status-*, 배경은 status-*-subtle ---- */
+.toast--success {
+  background-color: var(--status-success-subtle);
+  border-left-color: var(--status-success);
+}
+.toast--success .toast__icon {
+  color: var(--status-success);
+}
+
+.toast--warning {
+  background-color: var(--status-warning-subtle);
+  border-left-color: var(--status-warning);
+}
+.toast--warning .toast__icon {
+  color: var(--status-warning);
+}
+
+.toast--error {
+  background-color: var(--status-error-subtle);
+  border-left-color: var(--status-error);
+}
+.toast--error .toast__icon {
+  color: var(--status-error);
+}
+
+.toast--info {
+  background-color: var(--status-info-subtle);
+  border-left-color: var(--status-info);
+}
+.toast--info .toast__icon {
+  color: var(--status-info);
+}
