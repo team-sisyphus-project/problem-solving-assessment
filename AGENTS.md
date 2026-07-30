@@ -42,6 +42,7 @@ it in a separate section of this file, but do not delete or weaken BASELINE.
 
 | What you are building | Read |
 |---|---|
+| Any UI / screen card (tokens, primitives, shell, i18n rules) | `docs/ui-conventions.md` |
 | Static site (HTML/CSS/JS) | `conventions/stack-static.md` |
 | React frontend (Vite / CRA / Next) | `conventions/stack-frontend-react.md` |
 | React Router v8 Framework Mode (stable successor to Remix v1/v2) | `conventions/stack-react-router-v8.md` |
