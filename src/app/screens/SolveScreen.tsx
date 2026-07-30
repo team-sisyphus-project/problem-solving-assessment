@@ -6,6 +6,7 @@
  *   components/provider-group/base.md    (선택지·선택 상태·연결 자리)
  *   components/message-bubble/{base,applicant}.md
  *   components/composer/base.md
+ *   components/modal/base.md               (제출 확인 모달 — grain-4)
  *
  * 골격(스캐폴딩)의 "참조 화면 1개 완주" — 지원자용 문제 풀이(채팅) 화면을
  * 프리미티브·토큰만으로 완성한다(M-1/M-4). 화면 구성:
@@ -22,7 +23,7 @@
  * ---------------------------------------------------------------------------
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath, prevStepPath } from "../flow";
 import { strings } from "../i18n";
@@ -54,8 +55,14 @@ export function SolveScreen() {
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
 
+  // 제출 확인 모달 열림 상태(M-4·M-5) — "제출하기"는 즉시 제출하지 않고 이
+  // 모달을 띄운다. "최종 제출" 확정 시에만 잠금이 성립한다.
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   // stub 응답 타이머 — 언마운트 시 정리.
   const replyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 모달의 확정(주요) 액션 — 열릴 때 초점을 이 버튼으로 옮긴다.
+  const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
 
   // 전송은 제공자 선택 + 입력이 모두 있을 때만(응답 AI가 정해져야 대화 가능).
   const canSend = provider !== null && draft.trim().length > 0 && !pending;
@@ -78,12 +85,29 @@ export function SolveScreen() {
     }, 700);
   }
 
-  // 제출 — 대화 로그와 제출 시각을 스토어에 확정(M-4)하고 완료 화면으로 전진.
-  // 제출 확인 모달은 후속 grain(여기서는 최소 배선만).
-  function handleSubmit() {
+  // "제출하기" — 즉시 제출하지 않고 확인 모달을 연다(되돌릴 수 없는 액션).
+  function openConfirm() {
+    setConfirmOpen(true);
+  }
+
+  // "최종 제출" — 대화 로그와 제출 시각을 스토어에 확정(M-4)하고, 제출 플래그로
+  // 재응시가 잠긴 뒤(M-5) 완료 화면으로 전진한다.
+  function confirmSubmit() {
     markSubmitted(token);
+    setConfirmOpen(false);
     navigate(nextStepPath(token, "solve")!);
   }
+
+  // 모달이 열리면 확정 버튼으로 초점을 옮기고, Escape로 취소할 수 있게 한다.
+  useEffect(() => {
+    if (!confirmOpen) return;
+    confirmButtonRef.current?.focus();
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setConfirmOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [confirmOpen]);
 
   return (
     <div className="flow-screen">
@@ -198,10 +222,54 @@ export function SolveScreen() {
         >
           {s.backAction}
         </button>
-        <button type="button" className="btn" onClick={handleSubmit}>
+        <button type="button" className="btn" onClick={openConfirm}>
           {s.primaryAction}
         </button>
       </div>
+
+      {/* 제출 확인 모달(modal 프리미티브) — 되돌릴 수 없는 제출을 한 번 더 확인.
+          "최종 제출" 시에만 로그·제출 시각 확정 후 재응시 잠금이 성립(SC-4). */}
+      {confirmOpen && (
+        <div
+          className="modal-overlay"
+          onClick={() => setConfirmOpen(false)}
+        >
+          <div
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="submit-modal-title"
+            aria-describedby="submit-modal-body"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="modal__header">
+              <h2 className="modal__title" id="submit-modal-title">
+                {s.submitModal.title}
+              </h2>
+            </header>
+            <div className="modal__body" id="submit-modal-body">
+              {s.submitModal.body}
+            </div>
+            <footer className="modal__footer">
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => setConfirmOpen(false)}
+              >
+                {s.submitModal.cancelAction}
+              </button>
+              <button
+                type="button"
+                className="btn"
+                ref={confirmButtonRef}
+                onClick={confirmSubmit}
+              >
+                {s.submitModal.confirmAction}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

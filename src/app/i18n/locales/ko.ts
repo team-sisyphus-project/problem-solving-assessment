@@ -73,8 +73,17 @@ export const ko = {
       title: "문제 풀이",
       description:
         "아래 대화형 AI와 함께 문제를 풀어 나가세요. 주고받은 대화 로그가 담당자의 평가 자료가 됩니다.",
-      primaryAction: "제출",
+      primaryAction: "제출하기",
       backAction: "이전",
+      /** 제출 확인 모달(modal 재사용, SC-4/M-4·M-5) — "제출하기" → 확인 → 최종 제출.
+       * 되돌릴 수 없는 확정이므로 결과(잠금·재응시 불가)를 본문에서 분명히 안내한다. */
+      submitModal: {
+        title: "제출하면 되돌릴 수 없습니다",
+        body:
+          "지금까지의 전체 대화 로그와 제출 시각이 저장되고 응시가 종료됩니다. 제출 후에는 같은 링크로 다시 응시할 수 없습니다. 제출하시겠습니까?",
+        cancelAction: "돌아가기",
+        confirmAction: "최종 제출",
+      },
       /** 제공자 선택 슬롯(M-5) — 참조 화면 안에서 응답 AI를 고르는 자리.
        * 실제 키 연동 로직은 범위 밖(BYOP 연결 자리는 placeholder). */
       providerLegend: "응답 AI 선택",
