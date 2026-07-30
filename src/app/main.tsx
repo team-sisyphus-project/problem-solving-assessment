@@ -14,6 +14,9 @@ import { RouterProvider } from "react-router-dom";
 import "../styles/tokens.css";
 import "../styles/components/index.css";
 
+// 참조 화면(문제 풀이=채팅) Component 스타일 — conversation·message-bubble·composer
+import "../styles/chat.css";
+
 // 이번 grain: 셸 · 내비 · 흐름 화면 레이아웃 (토큰 전용)
 import "./styles/app-shell.css";
 import "./styles/navigation.css";

@@ -1,0 +1,177 @@
+/*
+ * Chat — 문제 풀이(채팅) 화면 Component 스타일 (framework-agnostic)
+ * ---------------------------------------------------------------------------
+ * Spec:
+ *   components/conversation/base.md
+ *   components/message-bubble/{base,applicant}.md
+ *   components/composer/base.md
+ *
+ * 참조 화면(지원자용 문제 풀이=채팅)을 구성하는 3 Component:
+ *   conversation   — 상단 활성 제공자 표시 + 시간순 메시지 스택(스크롤)
+ *   message-bubble — 한 번의 발화 말풍선. base=AI(무채색) / --applicant=지원자(accent-subtle)
+ *   composer       — 하단 입력(input 재사용) + 전송(button 재사용) 묶음
+ *
+ * 모든 디자인 값(색·서체·간격·둥글기·경계)은 tokens.css의 var(--token)만
+ * 참조한다(하드코딩 0). 구조/레이아웃 값(display·flex·align-self·overflow·
+ * width:100% 등)만 리터럴을 쓴다 — coding.md "구현 설정값" 범주로 하드코딩
+ * 위반이 아니다. 좌/우 정렬은 발화 주체 배치(레이아웃)이며 디자인 토큰이 아니다.
+ * ---------------------------------------------------------------------------
+ */
+
+/* =========================================================================
+ * conversation — 대화 목록 컨테이너
+ * 상단 제공자 표시 + 스크롤되는 메시지 스택 + (하단은 SolveScreen이 composer 배치).
+ * 읽기 폭은 sizing/base(container-width-lg). 셸(container--wide)도 lg라 정합.
+ * ========================================================================= */
+.conversation {
+  display: flex;
+  flex-direction: column;
+  width: 100%; /* 구조값 — 셸 컨테이너 폭에 맞춤 */
+  max-width: var(--container-width-lg); /* sizing: 넓은 읽기 폭 */
+  margin-left: auto;
+  margin-right: auto;
+  gap: var(--space-sm); /* 제공자 표시 ↔ 본문 사이 */
+}
+
+/* 활성 AI 제공자 표시(M-5) — 상단·좌측, 무채색·저강조 상시 상태 배지.
+ * accent·status 색을 쓰지 않는다(원칙 2 — 색 절제). 제공자명 텍스트 병행. */
+.conversation__provider {
+  align-self: flex-start; /* 레이아웃 — 좌측 정렬 */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+}
+
+.conversation__provider-label {
+  color: var(--text-muted);
+}
+
+.conversation__provider-value {
+  color: var(--text-default);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* 대화 영역 — 메시지 항목을 시간순으로 쌓는 세로 스택(스크롤 영역) */
+.conversation__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md); /* 메시지 항목 사이 세로 간격 */
+  overflow-y: auto; /* 구조값 — 긴 대화 스크롤 */
+  padding: var(--space-lg); /* 대화 영역 안쪽 여백 */
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-subtle);
+}
+
+/* 빈 상태(empty-state)·대기 표시(loading)는 각 프리미티브 선언을 그대로 재사용.
+ * 대기 표시는 목록 흐름 안에서 좌측(응답자=AI 쪽) 정렬. */
+.conversation__pending {
+  align-self: flex-start; /* 레이아웃 — AI 응답 자리 */
+}
+
+/* =========================================================================
+ * message-bubble — 발화 말풍선 (base = AI 응답)
+ * ========================================================================= */
+.message-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs); /* 작성자·본문·메타 세로 간격 */
+  max-width: var(--container-width-md); /* sizing: 가독 measure 제한 */
+
+  /* 표면 안쪽 여백 — 수직 space-sm · 수평 space-md */
+  padding: var(--space-sm) var(--space-md);
+
+  border-radius: var(--radius-lg);
+
+  /* 표면 + 헤어라인 경계 (AI = 무채색 절제) */
+  background-color: var(--surface-base);
+  border-style: solid;
+  border-width: var(--border-width-sm);
+  border-color: var(--border-subtle);
+
+  align-self: flex-start; /* 레이아웃 — AI 발화는 좌측 */
+}
+
+.message-bubble__author {
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-muted);
+}
+
+.message-bubble__body {
+  margin: 0;
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-relaxed); /* 긴 글 가독 */
+  color: var(--text-default);
+  white-space: pre-wrap; /* 구조값 — 여러 줄·공백 보존 */
+  word-break: break-word; /* 구조값 — 긴 토큰 줄바꿈 */
+}
+
+.message-bubble__meta {
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--text-subtle);
+}
+
+/* ---- Variant: applicant — 지원자 본인 발화. accent-subtle 표면, 경계 없음 ---- */
+.message-bubble--applicant {
+  background-color: var(--accent-subtle);
+  border-color: transparent; /* 표면 대비가 헤어라인을 대신 */
+  align-self: flex-end; /* 레이아웃 — 내 발화는 우측 */
+}
+
+/* =========================================================================
+ * composer — 하단 입력 + 전송 묶음
+ * 입력은 input 프리미티브(.input)를, 전송은 button 프리미티브(.btn)를 재사용.
+ * ========================================================================= */
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm); /* 힌트·입력·버튼 사이 */
+  width: 100%; /* 구조값 */
+  max-width: var(--container-width-lg);
+  margin-left: auto;
+  margin-right: auto;
+
+  /* 표면 안쪽 여백 — 수직 space-sm · 수평 space-md */
+  padding: var(--space-sm) var(--space-md);
+
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-base);
+
+  /* 대화 영역과의 상단 구분 경계 */
+  border-top-style: solid;
+  border-top-width: var(--border-width-sm);
+  border-top-color: var(--border-subtle);
+}
+
+/* 입력 필드 + 전송 버튼을 나란히 두는 행 */
+.composer__row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+/* 입력 필드(.input 재사용)는 남은 폭을 채운다 */
+.composer__field {
+  flex: 1 1 auto; /* 구조값 */
+  resize: vertical; /* 구조값 — 여러 줄 허용 */
+  min-height: var(--space-2xl); /* 편집 여유 높이 */
+}
+
+/* 보조 안내(입력 힌트·전송 단축키) */
+.composer__hint {
+  margin: 0;
+  font-size: var(--text-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--text-muted);
+}

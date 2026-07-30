@@ -54,9 +54,28 @@ export const strings = {
       stepLabel: "문제 풀이",
       title: "문제 풀이",
       description:
-        "이 자리에 대화형 문제 풀이 화면(채팅)이 배선됩니다. 실제 채팅·문제·채점은 이번 골격 범위 밖이며, 참조 화면 카드에서 완성합니다.",
+        "아래 대화형 AI와 함께 문제를 풀어 나가세요. 주고받은 대화 로그가 담당자의 평가 자료가 됩니다.",
       primaryAction: "제출",
       backAction: "이전",
+      /** 활성 AI 제공자 표시(M-5) — 상시 노출되는 맥락(ambient status) */
+      activeProviderLabel: "응답 AI",
+      /** 대화 시작 전 빈 상태(empty-state 재사용) */
+      emptyTitle: "대화를 시작해 보세요",
+      emptyDescription:
+        "아래 입력창에 첫 메시지를 보내면 대화가 시작됩니다. 문제 해결 과정을 자유롭게 풀어 나가세요.",
+      /** 말풍선 작성자 라벨 */
+      authorApplicant: "나",
+      authorAi: "AI",
+      /** AI 응답 대기 표시(loading 재사용) 문구 */
+      pendingText: "응답을 생성하고 있습니다…",
+      /** composer — 입력·힌트·전송 */
+      composerPlaceholder: "메시지를 입력하세요",
+      composerHint:
+        "전송하면 선택한 AI가 응답합니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      sendAction: "전송",
+      /** stub 응답 — 실제 LLM 연동 없이 흐름만 시연하는 임시 문구 */
+      stubReply:
+        "(예시 응답) 실제 AI 연동은 이후 단계에서 배선됩니다. 지금은 골격 시연을 위한 임시 응답으로, 문제 해결 흐름을 이어 갈 수 있습니다.",
     },
     complete: {
       stepLabel: "제출 완료",
