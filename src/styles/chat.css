@@ -83,10 +83,13 @@
   background-color: var(--surface-subtle);
 }
 
-/* 빈 상태(empty-state)·대기 표시(loading)는 각 프리미티브 선언을 그대로 재사용.
- * 대기 표시는 목록 흐름 안에서 좌측(응답자=AI 쪽) 정렬. */
+/* 빈 상태(empty-state)는 프리미티브 선언을 그대로 재사용.
+ * 대기 표시(응답 '생각 중')는 message-bubble/pending Extension으로, AI base
+ * 말풍선(무채색·좌측 정렬) 안에 작성자 라벨 + loading 인디케이터를 담는다.
+ * message-bubble이 이미 align-self: flex-start(AI측 좌측)를 부여하므로 여기서는
+ * 대기 자리 의도를 명시적으로 재확인만 한다(레이아웃 값, 디자인 토큰 아님). */
 .conversation__pending {
-  align-self: flex-start; /* 레이아웃 — AI 응답 자리 */
+  align-self: flex-start; /* 레이아웃 — AI 응답 자리(좌측) */
 }
 
 /* =========================================================================

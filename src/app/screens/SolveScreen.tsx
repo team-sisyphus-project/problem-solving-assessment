@@ -250,10 +250,21 @@ export function SolveScreen() {
             ))
           )}
 
+          {/* 응답 대기('생각 중') — AI측(좌측) 말풍선 안에 작성자 라벨 +
+              대기 인디케이터(스피너 + pendingText). aria-live="polite"로 응답
+              대기 상태를 스크린리더가 낭독한다. 응답 도착 시 사라진다.
+              (message-bubble/pending Extension — 값은 모두 토큰 클래스) */}
           {pending && (
-            <div className="loading conversation__pending" role="status">
-              <span className="spinner" aria-hidden="true" />
-              <span className="loading__text">{s.pendingText}</span>
+            <div
+              className="message-bubble conversation__pending"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="message-bubble__author">{aiAuthor}</span>
+              <span className="loading">
+                <span className="spinner" aria-hidden="true" />
+                <span className="loading__text">{s.pendingText}</span>
+              </span>
             </div>
           )}
         </div>
