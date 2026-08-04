@@ -10,9 +10,9 @@
  * 이메일)로 본인을 확인하고 응시를 시작한다. 로컬 검증을 통과하면 신원을 세션에
  * 저장(setCandidate)하고 문제 안내(brief)로 전진한다.
  *
- * 해당 토큰이 이미 제출됨이면(SC-4/M-5) 폼 대신 잠금 안내(empty-state)만
- * 표시한다 — 재응시 불가. 제출 플래그 세팅 자체는 solve 단계(grain-4) 몫이며,
- * 여기서는 그 플래그를 읽어 분기만 한다.
+ * 제출 후 재응시 잠금(SC-4/M-5)은 이 화면이 아니라 셸 계층(AppShell)의 공유
+ * 가드가 흐름 전체에 걸쳐 담당한다 — 제출됨이면 본인 확인 인덱스에 도달하기
+ * 전에 셸이 잠금 안내로 대체하므로, 이 화면은 미제출 상태만 다룬다.
  *
  * 실제 이메일 인증·서버 검증은 범위 밖 — 형식 검증만 로컬로 수행한다.
  * 하드코딩 스타일 0 — 모든 시각 표현은 프리미티브(.input/.empty-state/.btn)와
@@ -24,7 +24,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath } from "../flow";
 import { strings } from "../i18n";
-import { isSubmitted, setCandidate } from "../session/store";
+import { setCandidate } from "../session/store";
 
 /** 최소 이메일 형식 검증(로컬) — 실제 인증은 범위 밖 */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,18 +42,6 @@ export function VerifyScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
-
-  // 제출 후 재응시 잠금(SC-4/M-5) — 폼 대신 잠금 안내만 표시.
-  if (isSubmitted(token)) {
-    return (
-      <div className="flow-screen">
-        <div className="empty-state">
-          <h1 className="empty-state__title">{s.lockTitle}</h1>
-          <p className="empty-state__description">{s.lockDescription}</p>
-        </div>
-      </div>
-    );
-  }
 
   function validate(): FieldErrors {
     const next: FieldErrors = {};
