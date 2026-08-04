@@ -91,12 +91,16 @@ export const ko = {
         "GPT · Claude · Gemini 중 하나로 응시합니다. 선택하면 아래 대화가 그 AI로 응답합니다.",
       providerSelectedPrefix: "선택됨:",
       providerNoneSelected: "아직 선택하지 않았습니다.",
-      /** 연결 자리(BYOP placeholder) — 실제 키 로직 없음, 예약된 자리만 노출 */
-      connectSlotTitle: "연결 자리 (BYOP)",
-      connectSlotHintNone:
-        "제공자를 선택하면 본인 AI 계정을 연결하는 자리가 여기에 준비됩니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
-      connectSlotHintSuffix:
-        "계정 연결 자리입니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      /** 본인 API 키 연결(BYOP) — 지원자가 선택한 제공자의 키를 직접 입력한다.
+       * 키는 브라우저 세션 메모리에서만 쓰이고 서버·저장소·로그에 남지 않는다. */
+      keyFieldTitle: "본인 API 키 연결 (BYOP)",
+      keyFieldLabel: "API 키",
+      keyFieldPlaceholder: "본인 제공자에서 발급한 API 키를 붙여넣으세요",
+      /** 비밀값 비저장 정책 — 색 단독 금지 원칙에 따라 텍스트로 명시 */
+      keyStorageNote:
+        "입력한 키는 이 브라우저 세션 메모리에서만 사용되며, 서버·저장소·대화 로그 어디에도 저장되지 않습니다.",
+      keyFieldHintNone:
+        "먼저 위에서 응답 AI를 선택하면 본인 API 키를 연결하는 자리가 여기에 열립니다.",
       /** 대화 시작 전 빈 상태(empty-state 재사용) */
       emptyTitle: "대화를 시작해 보세요",
       emptyDescription:
@@ -108,14 +112,15 @@ export const ko = {
       pendingText: "응답을 생성하고 있습니다…",
       /** composer — 입력·힌트·전송 */
       composerPlaceholder: "메시지를 입력하세요",
-      composerHint:
-        "전송하면 선택한 AI가 응답합니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      composerHint: "전송하면 선택한 AI가 본인 키로 응답합니다.",
       /** 제공자 미선택 시 전송 비활성 안내 */
-      composerHintNoProvider: "먼저 위에서 응답 AI를 선택하세요.",
+      composerHintNoProvider: "먼저 위에서 응답 AI를 선택하고 API 키를 입력하세요.",
+      /** 키 미입력 시 전송 비활성 안내 */
+      composerHintNoKey: "전송하려면 본인 API 키를 입력하세요.",
       sendAction: "전송",
-      /** stub 응답 — 실제 LLM 연동 없이 흐름만 시연하는 임시 문구 */
-      stubReply:
-        "(예시 응답) 실제 AI 연동은 이후 단계에서 배선됩니다. 지금은 골격 시연을 위한 임시 응답으로, 문제 해결 흐름을 이어 갈 수 있습니다.",
+      /** LLM 호출 실패 시 오류 토스트 문구(제공자 메시지가 없을 때의 폴백) */
+      errorGeneric:
+        "응답을 가져오지 못했습니다. 키와 네트워크를 확인한 뒤 다시 시도해 주세요.",
     },
     complete: {
       stepLabel: "제출 완료",
