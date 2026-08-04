@@ -119,7 +119,8 @@ export function SolveScreen() {
       );
       if (!mountedRef.current) return;
       // 응답을 스토어에 append → 이전 대화 위에 순서대로 누적·유지(SC-3).
-      setMessages(appendMessage(token, "ai", reply).messages);
+      // 활성 제공자를 귀속으로 실어(평가 재료 식별) 저장한다 — apiKey는 제외.
+      setMessages(appendMessage(token, "ai", reply, provider).messages);
     } catch (err) {
       if (!mountedRef.current) return;
       // LlmError는 맥락 있는 메시지를, 그 외는 일반 폴백을 노출(키는 미포함).
