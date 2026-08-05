@@ -35,25 +35,25 @@
 }
 
 /* -------------------------------------------------------------------------
- * 제공자 선택 슬롯 — 연결 자리(BYOP placeholder)
+ * 제공자 선택 슬롯 — 본인 API 키 연결 자리(BYOP Extension)
  * -------------------------------------------------------------------------
  * 선택 메커니즘 자체(.provider-group / .provider-group__* / 선택 시 accent 승격)는
  * screens.css에 전역 정의되어 있어 이 화면이 그대로 재사용한다(spec: 선택 상세의
  * 단일 출처는 provider-group Base). 여기서는 provider-group의 선택적 구성 요소인
- * "연결 자리"만 참조 화면 슬롯용으로 신설한다(boundary: chat.css).
+ * "연결 자리"를 참조 화면 슬롯용으로 신설한다(boundary: chat.css).
  *
- * 연결 자리는 실제 키 연동 UI가 들어올 예약 공간이다. 비활성 톤(accent·status
- * 미사용, text-muted)으로 조용히 대기한다. 모든 색·서체·간격·둥글기·경계 두께는
- * var(--token) 참조(하드코딩 0). border-style: dashed는 "예약(placeholder) 자리"를
- * 알리는 어포던스로, border-style은 tokens의 축이 아니다(구현 설정값). */
+ * 연결 자리는 선택한 제공자의 본인 API 키를 직접 입력하는 활성 자리다(BYOP).
+ * 입력 컨트롤은 input 프리미티브(.input-field/.input)를 그대로 임베드한다. 활성
+ * 상태이므로 solid 경계로 그룹을 두른다(예약 placeholder의 dashed에서 승격).
+ * 모든 색·서체·간격·둥글기·경계 두께는 var(--token) 참조(하드코딩 0). */
 .provider-group__connect {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs);
+  gap: var(--space-xs);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   background-color: var(--surface-subtle);
-  border-style: dashed; /* 구조값 — 예약(placeholder) 자리 어포던스 */
+  border-style: solid; /* 구조값 — 활성 입력 그룹 경계 */
   border-width: var(--border-width-sm);
   border-color: var(--border-subtle);
 }
@@ -62,7 +62,7 @@
   font-size: var(--text-size-sm);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
-  color: var(--text-muted); /* 비활성 톤 */
+  color: var(--text-strong); /* 활성 톤 */
 }
 
 .provider-group__connect-hint {
@@ -83,10 +83,13 @@
   background-color: var(--surface-subtle);
 }
 
-/* 빈 상태(empty-state)·대기 표시(loading)는 각 프리미티브 선언을 그대로 재사용.
- * 대기 표시는 목록 흐름 안에서 좌측(응답자=AI 쪽) 정렬. */
+/* 빈 상태(empty-state)는 프리미티브 선언을 그대로 재사용.
+ * 대기 표시(응답 '생각 중')는 message-bubble/pending Extension으로, AI base
+ * 말풍선(무채색·좌측 정렬) 안에 작성자 라벨 + loading 인디케이터를 담는다.
+ * message-bubble이 이미 align-self: flex-start(AI측 좌측)를 부여하므로 여기서는
+ * 대기 자리 의도를 명시적으로 재확인만 한다(레이아웃 값, 디자인 토큰 아님). */
 .conversation__pending {
-  align-self: flex-start; /* 레이아웃 — AI 응답 자리 */
+  align-self: flex-start; /* 레이아웃 — AI 응답 자리(좌측) */
 }
 
 /* =========================================================================

@@ -34,24 +34,38 @@ export const ko = {
 
   /** 흐름 각 단계의 화면 문구 */
   screens: {
-    start: {
-      stepLabel: "시작·안내",
-      title: "응시를 시작합니다",
+    verify: {
+      stepLabel: "본인 확인",
+      title: "본인 확인 후 응시를 시작합니다",
       description:
-        "무작위로 출제되는 문제를 화면 안의 대화형 AI와 함께 풀어 제출합니다. 준비가 되면 아래에서 시작하세요.",
-      primaryAction: "응시 시작",
+        "별도 회원가입이나 로그인 없이, 이름과 이메일만 입력해 본인을 확인하면 바로 응시가 시작됩니다.",
+      /** 폼 필드 — 이름 */
+      nameLabel: "이름",
+      namePlaceholder: "예: 홍길동",
+      /** 폼 필드 — 이메일 */
+      emailLabel: "이메일",
+      emailPlaceholder: "예: hong@example.com",
+      /** 폼 하단 안내(helper) — 정보 사용 목적 */
+      formHint: "입력하신 정보는 응시 확인 용도로만 사용됩니다.",
+      primaryAction: "본인 확인하고 시작하기",
+      /** 로컬 검증 오류 메시지(색 단독 금지 — 메시지 병행, 원칙 2) */
+      errorNameRequired: "이름을 입력해 주세요.",
+      errorEmailRequired: "이메일을 입력해 주세요.",
+      errorEmailInvalid: "올바른 이메일 형식으로 입력해 주세요.",
+      /** 제출 후 재응시 잠금 안내(empty-state 재사용, SC-4/M-5) */
+      lockTitle: "이미 제출된 응시입니다",
+      lockDescription:
+        "이 초대 링크로는 이미 응시가 제출되어 다시 응시할 수 없습니다. 제출한 내용은 담당자가 검토합니다.",
     },
-    connect: {
-      stepLabel: "LLM 연결·선택",
-      title: "사용할 AI를 선택하세요",
-      description:
-        "본인이 사용하는 AI 계정을 직접 연결해 응시합니다(BYOP). 플랫폼은 키를 대신 보유하지 않습니다. 연결 방식의 세부 UI는 다음 단계에서 배선됩니다.",
-      /** 제공자 선택 자리(M-5) — 실제 키 연동 로직은 범위 밖 */
-      providerLegend: "AI 제공자",
-      providerHint: "하나를 선택하면 연결 자리로 이동합니다.",
-      selectedPrefix: "선택됨:",
-      noneSelected: "아직 선택하지 않았습니다.",
-      primaryAction: "연결하고 계속",
+    brief: {
+      stepLabel: "문제 안내",
+      /** 배정 문제 카드 상단 eyebrow — 이 문제가 본인에게 배정된 1건임을 알림 */
+      assignedLabel: "배정된 문제",
+      /** 카드 하단 안내 — 다음 행동(풀이 시작)의 맥락. 문제 제목·설명 자체는
+       * 도메인 데이터(session/problems)라 여기서 관리하지 않는다. */
+      guide:
+        "위 문제는 본인에게만 배정된 1건입니다. 내용을 확인한 뒤 준비가 되면 풀이를 시작하세요.",
+      primaryAction: "풀이 시작",
       backAction: "이전",
     },
     solve: {
@@ -59,8 +73,17 @@ export const ko = {
       title: "문제 풀이",
       description:
         "아래 대화형 AI와 함께 문제를 풀어 나가세요. 주고받은 대화 로그가 담당자의 평가 자료가 됩니다.",
-      primaryAction: "제출",
+      primaryAction: "제출하기",
       backAction: "이전",
+      /** 제출 확인 모달(modal 재사용, SC-4/M-4·M-5) — "제출하기" → 확인 → 최종 제출.
+       * 되돌릴 수 없는 확정이므로 결과(잠금·재응시 불가)를 본문에서 분명히 안내한다. */
+      submitModal: {
+        title: "제출하면 되돌릴 수 없습니다",
+        body:
+          "지금까지의 전체 대화 로그와 제출 시각이 저장되고 응시가 종료됩니다. 제출 후에는 같은 링크로 다시 응시할 수 없습니다. 제출하시겠습니까?",
+        cancelAction: "돌아가기",
+        confirmAction: "최종 제출",
+      },
       /** 제공자 선택 슬롯(M-5) — 참조 화면 안에서 응답 AI를 고르는 자리.
        * 실제 키 연동 로직은 범위 밖(BYOP 연결 자리는 placeholder). */
       providerLegend: "응답 AI 선택",
@@ -68,12 +91,16 @@ export const ko = {
         "GPT · Claude · Gemini 중 하나로 응시합니다. 선택하면 아래 대화가 그 AI로 응답합니다.",
       providerSelectedPrefix: "선택됨:",
       providerNoneSelected: "아직 선택하지 않았습니다.",
-      /** 연결 자리(BYOP placeholder) — 실제 키 로직 없음, 예약된 자리만 노출 */
-      connectSlotTitle: "연결 자리 (BYOP)",
-      connectSlotHintNone:
-        "제공자를 선택하면 본인 AI 계정을 연결하는 자리가 여기에 준비됩니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
-      connectSlotHintSuffix:
-        "계정 연결 자리입니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      /** 본인 API 키 연결(BYOP) — 지원자가 선택한 제공자의 키를 직접 입력한다.
+       * 키는 브라우저 세션 메모리에서만 쓰이고 서버·저장소·로그에 남지 않는다. */
+      keyFieldTitle: "본인 API 키 연결 (BYOP)",
+      keyFieldLabel: "API 키",
+      keyFieldPlaceholder: "본인 제공자에서 발급한 API 키를 붙여넣으세요",
+      /** 비밀값 비저장 정책 — 색 단독 금지 원칙에 따라 텍스트로 명시 */
+      keyStorageNote:
+        "입력한 키는 이 브라우저 세션 메모리에서만 사용되며, 서버·저장소·대화 로그 어디에도 저장되지 않습니다.",
+      keyFieldHintNone:
+        "먼저 위에서 응답 AI를 선택하면 본인 API 키를 연결하는 자리가 여기에 열립니다.",
       /** 대화 시작 전 빈 상태(empty-state 재사용) */
       emptyTitle: "대화를 시작해 보세요",
       emptyDescription:
@@ -85,14 +112,15 @@ export const ko = {
       pendingText: "응답을 생성하고 있습니다…",
       /** composer — 입력·힌트·전송 */
       composerPlaceholder: "메시지를 입력하세요",
-      composerHint:
-        "전송하면 선택한 AI가 응답합니다. 실제 키 연동은 이후 단계에서 배선됩니다.",
+      composerHint: "전송하면 선택한 AI가 본인 키로 응답합니다.",
       /** 제공자 미선택 시 전송 비활성 안내 */
-      composerHintNoProvider: "먼저 위에서 응답 AI를 선택하세요.",
+      composerHintNoProvider: "먼저 위에서 응답 AI를 선택하고 API 키를 입력하세요.",
+      /** 키 미입력 시 전송 비활성 안내 */
+      composerHintNoKey: "전송하려면 본인 API 키를 입력하세요.",
       sendAction: "전송",
-      /** stub 응답 — 실제 LLM 연동 없이 흐름만 시연하는 임시 문구 */
-      stubReply:
-        "(예시 응답) 실제 AI 연동은 이후 단계에서 배선됩니다. 지금은 골격 시연을 위한 임시 응답으로, 문제 해결 흐름을 이어 갈 수 있습니다.",
+      /** LLM 호출 실패 시 오류 토스트 문구(제공자 메시지가 없을 때의 폴백) */
+      errorGeneric:
+        "응답을 가져오지 못했습니다. 키와 네트워크를 확인한 뒤 다시 시도해 주세요.",
     },
     complete: {
       stepLabel: "제출 완료",

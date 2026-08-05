@@ -5,12 +5,13 @@
  * ---------------------------------------------------------------------------
  */
 
-import { useNavigate } from "react-router-dom";
-import { FIRST_STEP_PATH } from "../flow";
+import { useNavigate, useParams } from "react-router-dom";
+import { firstStepPath } from "../flow";
 import { strings } from "../i18n";
 
 export function CompleteScreen() {
   const navigate = useNavigate();
+  const { token = "" } = useParams();
   const s = strings.screens.complete;
 
   return (
@@ -23,7 +24,7 @@ export function CompleteScreen() {
         <button
           type="button"
           className="btn btn--secondary"
-          onClick={() => navigate(FIRST_STEP_PATH)}
+          onClick={() => navigate(firstStepPath(token))}
         >
           {s.restartAction}
         </button>

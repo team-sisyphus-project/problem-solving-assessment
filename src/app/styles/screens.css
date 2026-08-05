@@ -24,6 +24,71 @@
   gap: var(--space-sm);
 }
 
+/* 본인 확인 폼(verify) — 입력 필드(.input-field)를 세로로 쌓는 집중 입력 폭.
+   필드 사이 간격·읽기 폭은 토큰 참조, display/flex 등 구조값만 리터럴이다. */
+.verify-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  max-width: var(--container-width-sm); /* sizing: 가장 좁은 읽기 폭(집중 입력) */
+}
+
+/* 배정 문제 안내 카드(brief) — 배정된 문제 1건(제목·설명)을 위계에 맞춰 제시.
+   eyebrow(맥락)→제목(초점)→설명(본문)→안내(다음 행동)의 세로 위계로, 화면당
+   주요 초점 하나(원칙 3)를 이 카드에 둔다. 모든 디자인 값은 토큰 참조이며,
+   display/flex/width:100%/white-space 등 구조값만 리터럴이다(하드코딩 0). */
+.problem-brief {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm); /* eyebrow·제목·설명 사이 세로 간격 */
+  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  max-width: var(--container-width-md); /* sizing: 집중 흐름 읽기 폭 */
+  padding: var(--space-xl); /* 카드 안쪽 여백(넉넉한 여백, 원칙 1) */
+  background-color: var(--surface-base);
+  border: var(--border-width-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); /* 은은한 엘리베이션으로 콘텐츠를 표면으로 */
+}
+
+/* eyebrow — 배정 문제임을 알리는 보조 라벨(무채색·작게) */
+.problem-brief__eyebrow {
+  margin: 0;
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-muted);
+}
+
+/* 문제 제목 — 화면의 주요 초점(가장 크고 굵고 진하게) */
+.problem-brief__title {
+  margin: 0;
+  font-size: var(--text-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+/* 문제 설명 — 본문 위계(편안한 행간, 줄바꿈 보존) */
+.problem-brief__description {
+  margin: 0;
+  font-size: var(--text-size-md);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-default);
+  white-space: pre-line; /* 구조값 — 설명 원문의 줄바꿈 유지 */
+}
+
+/* 다음 행동 안내 — 구분선으로 문제 본문과 분리한 보조 문구 */
+.problem-brief__guide {
+  margin: 0;
+  padding-top: var(--space-md);
+  border-top: var(--border-width-sm) solid var(--border-subtle);
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-muted);
+}
+
 /* 제공자 선택 그룹(M-5) — GPT/Claude/Gemini 선택 자리 */
 .provider-group {
   display: flex;
