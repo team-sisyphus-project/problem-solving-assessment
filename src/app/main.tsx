@@ -22,6 +22,9 @@ import "./styles/app-shell.css";
 import "./styles/navigation.css";
 import "./styles/screens.css";
 
+// 웰컴 인트로(흐름 앞단 전면 히어로) — 셸 밖에서 쓰이는 독립 레이어라 마지막에
+import "./styles/welcome.css";
+
 import { router } from "./router";
 
 const rootEl = document.getElementById("root");

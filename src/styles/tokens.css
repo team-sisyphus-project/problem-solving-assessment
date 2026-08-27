@@ -165,3 +165,50 @@
   --container-width-md: 40rem; /* 640px — 집중 흐름(시작·연결·완료) 기준 폭 */
   --container-width-lg: 60rem; /* 960px — 문제 풀이(채팅) 넓은 폭 */
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ * WELCOME HERO — 신규 토큰 후보 (Design Spec 미등록)
+ * ---------------------------------------------------------------------------
+ * 웰컴 인트로 화면(A안 · 임팩트 3D)은 흐름 4단계와 달리 전면 일러스트 배경 위에
+ * 광택 3D 오브젝트를 얹는다. 하늘 그라디언트·구름·언덕·유리 재질처럼 기존 토큰
+ * 체계(surface/text/border/accent/status)로 표현되지 않는 값들이라, 웰컴 인트로
+ * 스펙의 지시대로 **새 토큰 후보**로 여기에 격리해 둔다.
+ *
+ *   - 이 블록은 웰컴 인트로 화면 전용이며, 흐름 4단계 화면은 참조하지 않는다.
+ *   - A안이 채택되면 Design Spec의 token-groups(color/sizing)에 정식 등록하고
+ *     이 "후보" 표기를 지운다. 폐기되면 이 블록과 welcome.css를 함께 지운다.
+ *   - 후보라도 규칙 1(하드코딩 0)은 그대로 적용된다 — 원시값은 여기에만 둔다.
+ * ---------------------------------------------------------------------------
+ */
+:root {
+  /* 하늘 — 위(짙은 파랑)에서 아래(옅은 하늘)로 내려오는 3단 그라디언트 */
+  --hero-sky-top: #0b63d8;
+  --hero-sky-mid: #2f8ef2;
+  --hero-sky-base: #cfe8fb;
+
+  /* 구름 — 흐릿하게 번지는 흰 덩어리 */
+  --hero-cloud: #ffffff;
+
+  /* 언덕 — 원경에서 근경으로 갈수록 옅어지는 3겹 실루엣 */
+  --hero-hill-far: #78bbec;
+  --hero-hill-near: #a9d6f4;
+  --hero-hill-fore: #dcefFC;
+
+  /* 하늘 위에 얹히는 텍스트 — 무채색 text-* 토큰은 짙은 하늘에서 대비가 나오지 않는다 */
+  --hero-text-strong: #ffffff;
+  --hero-text-soft: #dbeafe;
+
+  /* 3D 오브젝트 재질의 색 성분(유리 틴트 · 투과 감쇠색) */
+  --hero-object-tint: #eef8ff;
+  --hero-object-attenuation: #cdeaff;
+
+  /* 히어로 타이틀 크기 — text-size 스케일의 최대치(3xl=30px)보다 큰 표제 단계 */
+  --hero-title-size: 3.25rem;
+  --hero-title-size-compact: 2.25rem;
+
+  /* 레이아웃 치수 — 오브젝트가 놓이는 무대와 언덕 띠의 높이 */
+  --hero-stage-min-height: 16rem;
+  --hero-hills-height: 22rem;
+  --hero-content-width: 44rem;
+}

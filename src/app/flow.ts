@@ -9,8 +9,10 @@
  *   1. 본인 확인  →  2. 문제 안내  →  3. 문제 풀이  →  4. 제출 완료
  *
  * - 모든 단계는 초대 토큰 스코프(`/invite/:token/...`) 아래에 있다. 각 단계의
- *   `segment`는 토큰 베이스에 상대적인 경로 조각이며, 본인 확인(verify)은
- *   토큰 인덱스(빈 segment)다.
+ *   `segment`는 토큰 베이스에 상대적인 경로 조각이다.
+ * - 토큰 인덱스(`/invite/:token`)는 흐름 4단계가 아니라 그 **앞단**의 웰컴 인트로
+ *   화면이 차지한다(`welcomePath`). 인트로는 단계 표시자에 노출되지 않으며, 흐름의
+ *   첫 단계는 여전히 본인 확인(verify)이다 — 4단계 구조 자체는 그대로다.
  * - 순서는 좌→우로 고정. 이전은 완료, 이후는 예정.
  * - 제출 완료(4)는 흐름의 종료 상태(이후 전진 없음).
  * - 이전 흐름의 "LLM 연결/선택(connect)" 단계는 제거되었다(회원가입/연결 없이
@@ -36,7 +38,7 @@ export interface FlowStep {
 
 /** 선형 흐름의 단일 정의 — 순서가 곧 단계 번호(1-based) */
 export const FLOW_STEPS: readonly FlowStep[] = [
-  { id: "verify", segment: "", label: strings.screens.verify.stepLabel },
+  { id: "verify", segment: "verify", label: strings.screens.verify.stepLabel },
   { id: "brief", segment: "brief", label: strings.screens.brief.stepLabel },
   { id: "solve", segment: "solve", label: strings.screens.solve.stepLabel },
   { id: "complete", segment: "complete", label: strings.screens.complete.stepLabel },
@@ -49,7 +51,15 @@ export function invitePath(token: string, id: StepId): string {
   return step.segment ? `${base}/${step.segment}` : base;
 }
 
-/** 토큰 흐름의 첫 단계 경로(진입·fallback 기본값) */
+/**
+ * 웰컴 인트로 화면의 경로 — 초대 링크의 토큰 인덱스(`/invite/:token`).
+ * 흐름 단계가 아니라 흐름 진입 직전의 환영 한 장이라 FLOW_STEPS에 넣지 않는다.
+ */
+export function welcomePath(token: string): string {
+  return `${INVITE_BASE}/${token}`;
+}
+
+/** 토큰 흐름의 첫 단계 경로(인트로 CTA의 목적지·흐름 내 fallback 기본값) */
 export function firstStepPath(token: string): string {
   return invitePath(token, FLOW_STEPS[0].id);
 }

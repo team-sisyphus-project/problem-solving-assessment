@@ -138,6 +138,41 @@
 - 단계 상태는 `stepStatus()` → `"done" | "current" | "upcoming"`. 다음/이전 이동은
   `nextStepPath()`·`prevStepPath()`. 새 화면은 이 흐름 정의에 단계를 추가하는 방식으로 배선한다.
 
+### 웰컴 인트로 — 셸 밖 예외 레이어 (흐름 단계 아님)
+
+초대 링크의 토큰 인덱스(`/invite/:token`)는 흐름 4단계가 아니라 **웰컴 인트로**가 차지한다.
+전면(full-bleed) 히어로라 셸/내비 클래스를 쓰지 않는 **유일한 예외**이며, 나머지 규칙
+(토큰만 · 프리미티브 재사용 · 문구는 키)은 그대로 적용된다.
+
+- **위치**: 화면 [`src/app/screens/WelcomeScreen.tsx`], 파츠 `src/app/screens/welcome/`,
+  스타일 [`src/app/styles/welcome.css`](../src/app/styles/welcome.css)(로드 순서 6번 뒤 7번).
+- **클래스**: `.welcome` > `.welcome__sky` · `.welcome__canvas` · `.welcome__scenery`
+  (`__cloud` · `__hills`) · `.welcome__brand` · `.welcome__content`
+  (`__copy` · `__eyebrow` · `__title` · `__description` · `__stage` · `__actions` · `__cta`).
+- **단계 표시자를 쓰지 않는다.** 인트로는 `FLOW_STEPS`에 없고 stepper에도 나타나지 않는다 —
+  4단계 구조(`verify` → `brief` → `solve` → `complete`)는 그대로다. CTA의 목적지는
+  `firstStepPath(token)`(= `/invite/:token/verify`)이고, 인트로 경로는 `welcomePath(token)`.
+- **주요 버튼 하나**(원칙 3) — CTA는 프리미티브 `.btn`을 재사용하고 `.welcome__cta`는
+  크기·엘리베이션만 얹는다. 건너뛰기·뒤로가기 같은 다른 액션을 두지 않는다.
+- **모션 없는 경로를 항상 함께 만든다.** `prefers-reduced-motion: reduce` · WebGL 미지원 ·
+  three 청크 로드 실패 어느 쪽이든 같은 카피·레이아웃에 정적 SVG 오브젝트로 대체된다.
+
+#### 신규 토큰 후보 (`--hero-*`)
+
+하늘 그라디언트·구름·언덕·유리 틴트·표제 크기는 기존 토큰 체계(surface/text/border/
+accent/status, text-size 스케일)로 표현되지 않는다. `tokens.css` 맨 아래의 **"신규 토큰
+후보"** 블록에 `--hero-*`로 격리해 두었다.
+
+- 후보라도 규칙 1은 그대로다 — 원시값은 `tokens.css`에만 두고, 화면·컴포넌트·three 씬은
+  `var(--hero-*)`(또는 `getComputedStyle`로 읽은 같은 토큰)만 참조한다.
+- A안이 채택되면 Design Spec의 `token-groups/color`·`sizing`에 정식 등록하고 "후보" 표기를
+  지운다. 폐기되면 이 블록과 `welcome.css`·`screens/welcome/`을 함께 지운다.
+- 예외: three 재질의 물리 파라미터(`transmission`·`ior`·`thickness` 등)와 카메라·조명
+  좌표는 색·간격으로 인지되지 않는 **구현 설정값**이라 토큰화하지 않는다(승인된 모션
+  에셋의 값을 그대로 옮긴 것).
+
+---
+
 ---
 
 ## 규칙 4 — i18n: 문구는 키를 통해서만
