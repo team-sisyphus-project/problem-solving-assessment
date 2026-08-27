@@ -47,9 +47,11 @@ export function AppShell() {
   // 단계에서 자식 화면 대신 잠금 안내만 렌더한다. 완료는 제출 직후 목적지라 예외.
   const locked = currentStep.id !== "complete" && isSubmitted(token);
 
-  // 문제 풀이(채팅)만 넓은 콘텐츠 폭을 쓴다(app-shell base: md~lg). 잠금 안내는
-  // 좁은 폭을 유지한다(다른 empty-state 화면과 동일).
-  const isWide = !locked && currentStep.id === "solve";
+  // 2단 레이아웃을 쓰는 단계(본인 확인·문제 풀이)만 넓은 콘텐츠 폭을 쓴다
+  // (app-shell base: md~lg). 잠금 안내는 좁은 폭을 유지한다(다른 empty-state
+  // 화면과 동일).
+  const isWide =
+    !locked && (currentStep.id === "solve" || currentStep.id === "verify");
   const containerClass = isWide
     ? "app-shell__container app-shell__container--wide"
     : "app-shell__container";

@@ -49,7 +49,15 @@ function selectProviderAndKey() {
     `${strings.providers.gpt} ${s.keyFieldLabel}`,
   );
   fireEvent.change(keyField, { target: { value: API_KEY } });
+  // 풀이 화면은 1단계(본인 AI 연결) → 2단계(대화)로 나뉜다. 연결을 마쳤으면
+  // "연결하고 계속"으로 대화 단계에 들어간다.
+  fireEvent.click(screen.getByRole("button", { name: s.phaseConnectAction }));
   return keyField as HTMLInputElement;
+}
+
+/** 연결을 건너뛰고 대화 단계로 넘어간다(AI 미연결 상태). */
+function skipConnect() {
+  fireEvent.click(screen.getByRole("button", { name: s.phaseSkipAction }));
 }
 
 function sendMessage(text: string) {
@@ -66,6 +74,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
 
   it("빈 대화 초기 상태를 표시한다", () => {
     renderSolve();
+    skipConnect();
     expect(
       screen.getByRole("heading", { name: s.emptyTitle }),
     ).toBeInTheDocument();
@@ -73,11 +82,14 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
 
   it("키 필드는 password 타입이며 제공자 선택 후에만 열린다", () => {
     renderSolve();
-    // 선택 전에는 키 입력 자리가 없다.
+    // 선택 전에는 키 입력 자리가 없다(1단계 안에서 판정).
     expect(
       screen.queryByLabelText(`${strings.providers.gpt} ${s.keyFieldLabel}`),
     ).not.toBeInTheDocument();
-    const keyField = selectProviderAndKey();
+    fireEvent.click(screen.getByRole("button", { name: strings.providers.gpt }));
+    const keyField = screen.getByLabelText(
+      `${strings.providers.gpt} ${s.keyFieldLabel}`,
+    ) as HTMLInputElement;
     expect(keyField.type).toBe("password");
   });
 

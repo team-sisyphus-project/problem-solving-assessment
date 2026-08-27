@@ -22,6 +22,9 @@ import "./styles/app-shell.css";
 import "./styles/navigation.css";
 import "./styles/screens.css";
 
+// 연출이 붙는 흐름 화면(본인 확인 2단 · 풀이 2단계) 레이아웃
+import "./styles/flow-screens.css";
+
 // 웰컴 인트로(흐름 앞단 전면 히어로) — 셸 밖에서 쓰이는 독립 레이어라 마지막에
 import "./styles/welcome.css";
 

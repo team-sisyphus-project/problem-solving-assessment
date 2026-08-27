@@ -56,9 +56,9 @@ function expectLocked() {
 describe("제출 후 전 흐름 잠금 강제 (SC-4/M-5)", () => {
   it("제출 전에는 잠금이 걸리지 않는다 (풀이 화면 정상 렌더)", () => {
     renderAt("/solve");
-    // 잠금 안내가 아니라 풀이 화면의 빈 대화 초기 상태가 보인다.
+    // 잠금 안내가 아니라 풀이 화면의 첫 단계(본인 AI 연결)가 정상 렌더된다.
     expect(
-      screen.getByRole("heading", { name: solve.emptyTitle }),
+      screen.getByRole("heading", { name: solve.phaseConnectTitle }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: verify.lockTitle }),

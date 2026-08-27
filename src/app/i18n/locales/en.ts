@@ -68,6 +68,14 @@ export const en = {
       emailPlaceholder: "e.g. alex@example.com",
       /** 폼 하단 안내(helper) — 정보 사용 목적 */
       formHint: "We use these details only to confirm your submission.",
+      /**
+       * 좌측 패널 — 문제를 훑어 내려가는 스캔 연출에 실리는 본문.
+       * 장식이 아니라 읽히는 콘텐츠다(스크린리더도 이 문단을 그대로 읽는다).
+       * 한 단어씩 하이라이트가 지나가므로 문장은 짧고 리듬이 있게 쓴다.
+       */
+      scanLabel: "While we get your problem ready",
+      scanBody:
+        "This is not a quiz with one right answer. You will work through a single real problem in a conversation with an AI, and what we read afterwards is the conversation itself — how you framed the problem, what you questioned, where you changed your mind, and what you decided to leave out. Take the time you need. There is no clock counting down.",
       primaryAction: "Confirm and start",
       /** 로컬 검증 오류 메시지(색 단독 금지 — 메시지 병행, 원칙 2) */
       errorNameRequired: "Please enter your name.",
@@ -94,6 +102,41 @@ export const en = {
       title: "Work through the problem",
       description:
         "Think it through with the AI below. The conversation you have here is what the hiring team reviews.",
+
+      /*
+       * 풀이는 두 단계로 나뉜다. 1단계에서 본인 AI를 연결하고(건너뛰기 가능),
+       * 2단계에서 실제로 대화하며 문제를 푼다. 흐름 4단계(단계 표시자)는 그대로고,
+       * 이건 풀이 화면 **안**의 하위 단계다.
+       */
+      phaseConnectLabel: "Step 1 of 2",
+      phaseConnectTitle: "Bring your own AI",
+      phaseConnectLead:
+        "You will solve this problem in a conversation with an AI — not alone, and not from memory.",
+      phaseConnectBody:
+        "We are not marking the final answer. What gets reviewed is the conversation: how you break the problem down, what you push back on, and how you decide. So use the AI you already work with, and work the way you normally do.",
+      phaseConnectPrivacy:
+        "Connect it with your own API key. The key stays in this browser and is never sent to our servers, saved, or written into the conversation log.",
+      phaseConnectAction: "Connect and continue",
+      phaseSkipAction: "Skip for now",
+      phaseSkipNote: "You can connect an AI later, but you cannot start the conversation until you do.",
+
+      phaseChatLabel: "Step 2 of 2",
+
+      /** 2단계에서 AI가 아직 연결되지 않은 경우의 안내 */
+      notConnectedTitle: "No AI connected yet",
+      notConnectedBody:
+        "You skipped this earlier. Connect an AI to start the conversation.",
+      notConnectedAction: "Connect an AI",
+
+      /** 배정 문제 고정 패널 — 채팅 중에도 문제를 계속 볼 수 있게 접었다 폈다 */
+      problemPinLabel: "Your problem",
+      problemPinShow: "Show problem",
+      problemPinHide: "Hide problem",
+
+      /** 경과 시간 — 제한 시간이 아니라 스스로 속도를 가늠하기 위한 표시 */
+      timerLabel: "Time on this problem",
+      timerHint: "No time limit. This is just so you can pace yourself.",
+
       primaryAction: "Submit",
       backAction: "Back",
       /** 제출 확인 모달(modal 재사용, SC-4/M-4·M-5) — "제출하기" → 확인 → 최종 제출.

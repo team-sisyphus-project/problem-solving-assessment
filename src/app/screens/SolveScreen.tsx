@@ -8,13 +8,20 @@
  *   components/composer/base.md
  *   components/modal/base.md               (제출 확인 모달 — grain-4)
  *
- * 골격(스캐폴딩)의 참조 화면을 그대로 이어받아 실제 BYOP 동작을 배선한다(M-3).
- * 화면 구성:
- *   상단 제공자 선택 슬롯(M-5, provider-group 임베드) + 본인 API 키 입력 자리
- *   (BYOP, input 프리미티브) + 메시지 스택(빈 상태/버블/대기) + 하단 composer.
+ * 풀이는 화면 **안에서 두 단계**로 나뉜다(흐름 4단계·단계 표시자는 그대로다).
  *
- * M-5: 참조 화면 **안에서** GPT/Claude/Gemini 중 하나를 로컬 state로 선택하고,
- * 선택된 제공자가 곧 현재 응답 AI로 반영된다(작성자 라벨·키 필드 라벨).
+ *   1단계 connect — 무엇을 보는 평가인지 설명하고, 본인 AI를 연결한다(BYOP).
+ *                   건너뛸 수 있지만, 건너뛰면 대화를 시작할 수 없다.
+ *   2단계 chat    — 좌: 경과 시간 + 흘러가는 구름 / 우: 고정된 문제 + 대화.
+ *
+ * 예전에는 제공자 선택·키 입력이 대화창 위에 얹혀 있어서, 처음 온 지원자가
+ * "왜 내 키를 넣지?"를 물을 자리가 없었다. 단계를 나눈 이유가 그것이다.
+ *
+ * 이미 대화가 있는 세션으로 되돌아오면 1단계를 건너뛰고 바로 대화로 간다 —
+ * 진행 중이던 사람에게 연결 화면을 다시 들이밀지 않는다.
+ *
+ * M-5: GPT/Claude/Gemini 중 하나를 로컬 state로 선택하고, 선택된 제공자가 곧
+ * 현재 응답 AI로 반영된다(작성자 라벨·키 필드 라벨).
  *
  * BYOP: 지원자가 선택한 제공자의 본인 API 키를 화면에서 직접 입력한다. 키는
  * 브라우저 세션 메모리(로컬 state)에만 존재하며 서버·localStorage·세션 스토어·
@@ -40,12 +47,18 @@ import {
 import {
   appendMessage,
   getOrCreateSession,
+  markStarted,
   markSubmitted,
   type ChatMessage,
   type MessageRole,
 } from "../session/store";
+import { ConnectStep } from "./solve/ConnectStep";
+import { DriftingClouds } from "./solve/DriftingClouds";
+import { ProblemPin } from "./solve/ProblemPin";
+import { SolveTimer } from "./solve/SolveTimer";
 
-const PROVIDER_IDS = Object.keys(strings.providers) as ProviderId[];
+/** 풀이 화면 안의 하위 단계 */
+type SolvePhase = "connect" | "chat";
 
 /** 세션 스토어 역할(applicant/ai) → 어댑터 역할(user/assistant) 매핑.
  * 비밀 경계: apiKey는 이 변환에 개입하지 않는다(메시지 로그에 키 없음). */
@@ -69,8 +82,12 @@ export function SolveScreen() {
 
   // 대화 로그는 토큰 세션 스토어가 원본(source of truth) — 진입 시 기존 로그를
   // 불러오고, 전송마다 스토어에 append 후 화면 상태를 동기화한다(토큰별 영속).
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    () => getOrCreateSession(token).messages,
+  const session = getOrCreateSession(token);
+  const [messages, setMessages] = useState<ChatMessage[]>(session.messages);
+
+  // 하위 단계 — 이미 대화가 시작된 세션이면 연결 화면을 건너뛴다.
+  const [phase, setPhase] = useState<SolvePhase>(
+    session.messages.length > 0 ? "chat" : "connect",
   );
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
@@ -130,6 +147,16 @@ export function SolveScreen() {
     }
   }
 
+  /*
+   * 1단계 → 2단계. 연결했든 건너뛰었든 같은 문으로 들어간다. 이 순간 풀이
+   * 시작 시각을 찍어(markStarted) 경과 시간의 기준점을 세운다 — 이미 찍혀
+   * 있으면 그대로 두므로 재진입해도 시계가 되돌아가지 않는다.
+   */
+  function enterChat() {
+    markStarted(token);
+    setPhase("chat");
+  }
+
   // "제출하기" — 즉시 제출하지 않고 확인 모달을 연다(되돌릴 수 없는 액션).
   function openConfirm() {
     setConfirmOpen(true);
@@ -161,167 +188,164 @@ export function SolveScreen() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [confirmOpen]);
 
-  return (
-    <div className="flow-screen">
-      <section className="conversation" aria-label={s.title}>
-        {/* 제공자 선택 슬롯(M-5) — provider-group 임베드. 선택 UI + 연결 자리. */}
-        <div
-          className="provider-group"
-          role="group"
-          aria-label={s.providerLegend}
-        >
-          <span className="provider-group__legend">{s.providerLegend}</span>
-          <span className="provider-group__hint">{s.providerHint}</span>
-          <div className="provider-group__options">
-            {PROVIDER_IDS.map((id) => (
-              <button
-                key={id}
-                type="button"
-                className="btn btn--secondary"
-                aria-pressed={provider === id}
-                onClick={() => setProvider(id)}
-              >
-                {strings.providers[id]}
-              </button>
-            ))}
-          </div>
-          {/* 색 단독 금지(원칙 2) — 선택 결과를 항상 텍스트로 병행 */}
-          <span className="provider-group__selected" role="status">
-            {provider
-              ? `${s.providerSelectedPrefix} ${strings.providers[provider]}`
-              : s.providerNoneSelected}
-          </span>
-
-          {/* 본인 API 키 연결(BYOP) — 연결 자리를 활성 키 입력 필드로 확장.
-              키는 in-memory state로만 보관(저장·로그 없음). 제공자 선택 후에만
-              입력 자리가 열린다. */}
-          <div className="provider-group__connect">
-            <span className="provider-group__connect-title">
-              {s.keyFieldTitle}
-            </span>
-            {provider ? (
-              <div className="input-field">
-                <label className="input-field__label" htmlFor="byop-key">
-                  {`${strings.providers[provider]} ${s.keyFieldLabel}`}
-                </label>
-                <input
-                  id="byop-key"
-                  className="input"
-                  type="password"
-                  autoComplete="off"
-                  spellCheck={false}
-                  value={apiKey}
-                  placeholder={s.keyFieldPlaceholder}
-                  aria-describedby="byop-key-note"
-                  onChange={(e) => setApiKey(e.target.value)}
-                />
-                <p className="input-field__helper" id="byop-key-note">
-                  {s.keyStorageNote}
-                </p>
-              </div>
-            ) : (
-              <p className="provider-group__connect-hint">
-                {s.keyFieldHintNone}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="conversation__list">
-          {messages.length === 0 && !pending ? (
-            <div className="empty-state">
-              <h1 className="empty-state__title">{s.emptyTitle}</h1>
-              <p className="empty-state__description">{s.emptyDescription}</p>
-            </div>
-          ) : (
-            messages.map((m) => (
-              <div
-                key={m.id}
-                className={
-                  m.role === "applicant"
-                    ? "message-bubble message-bubble--applicant"
-                    : "message-bubble"
-                }
-              >
-                <span className="message-bubble__author">
-                  {m.role === "applicant" ? s.authorApplicant : aiAuthor}
-                </span>
-                <p className="message-bubble__body">{m.text}</p>
-              </div>
-            ))
-          )}
-
-          {/* 응답 대기('생각 중') — AI측(좌측) 말풍선 안에 작성자 라벨 +
-              대기 인디케이터(스피너 + pendingText). aria-live="polite"로 응답
-              대기 상태를 스크린리더가 낭독한다. 응답 도착 시 사라진다.
-              (message-bubble/pending Extension — 값은 모두 토큰 클래스) */}
-          {pending && (
-            <div
-              className="message-bubble conversation__pending"
-              role="status"
-              aria-live="polite"
-            >
-              <span className="message-bubble__author">{aiAuthor}</span>
-              <span className="loading">
-                <span className="spinner" aria-hidden="true" />
-                <span className="loading__text">{s.pendingText}</span>
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* composer — 입력(.input) + 전송(.btn) 묶음 */}
-      <form
-        className="composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void handleSend();
-        }}
-      >
-        {/* LLM 호출 실패 — 비차단 오류 토스트(색 + 아이콘 + 메시지 병행). */}
-        {error && (
-          <div className="toast toast--error" role="alert">
-            <span className="toast__icon" aria-hidden="true">
-              !
-            </span>
-            <span className="toast__message">{error}</span>
-          </div>
-        )}
-        <div className="composer__row">
-          <textarea
-            className="input composer__field"
-            rows={2}
-            placeholder={s.composerPlaceholder}
-            aria-label={s.composerPlaceholder}
-            value={draft}
-            disabled={pending}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-          <button type="submit" className="btn" disabled={!canSend}>
-            {s.sendAction}
+  // 1단계 — 본인 AI 연결(건너뛰기 가능). 대화·타이머는 아직 시작하지 않는다.
+  if (phase === "connect") {
+    return (
+      <div className="flow-screen">
+        <ConnectStep
+          provider={provider}
+          apiKey={apiKey}
+          onProviderChange={setProvider}
+          onApiKeyChange={setApiKey}
+          onContinue={enterChat}
+          onSkip={enterChat}
+        />
+        <div className="flow-actions">
+          <button
+            type="button"
+            className="btn btn--low-emphasis"
+            onClick={() => navigate(prevStepPath(token, "solve")!)}
+          >
+            {s.backAction}
           </button>
         </div>
-        <p className="composer__hint">
-          {provider === null
-            ? s.composerHintNoProvider
-            : !hasKey
-              ? s.composerHintNoKey
-              : s.composerHint}
-        </p>
-      </form>
+      </div>
+    );
+  }
 
-      <div className="flow-actions">
-        <button
-          type="button"
-          className="btn btn--low-emphasis"
-          onClick={() => navigate(prevStepPath(token, "solve")!)}
-        >
-          {s.backAction}
-        </button>
-        <button type="button" className="btn" onClick={openConfirm}>
-          {s.primaryAction}
-        </button>
+  // 2단계 — 좌: 경과 시간 + 흘러가는 구름 / 우: 고정된 문제 + 대화.
+  return (
+    <div className="flow-screen">
+      <div className="solve-layout">
+        {/* 좌 — 시간을 재는 자리. 대화에서 눈을 떼지 않아도 곁눈으로 보인다 */}
+        <aside className="solve-aside">
+          <DriftingClouds />
+          <div className="solve-aside__content">
+            <span className="solve-phase-label">{s.phaseChatLabel}</span>
+            <SolveTimer startedAt={session.startedAt} />
+          </div>
+        </aside>
+
+        {/* 우 — 문제를 머리에 붙여 두고 그 아래에서 대화한다 */}
+        <div className="solve-main">
+          <ProblemPin problem={session.problem} />
+
+          {/* 건너뛴 경우 — 대화를 시작할 수 없으므로 되돌아갈 문을 준다 */}
+          {provider === null || !hasKey ? (
+            <div className="solve-notconnected">
+              <h2 className="solve-notconnected__title">
+                {s.notConnectedTitle}
+              </h2>
+              <p className="solve-notconnected__body">{s.notConnectedBody}</p>
+              <button
+                type="button"
+                className="btn btn--secondary"
+                onClick={() => setPhase("connect")}
+              >
+                {s.notConnectedAction}
+              </button>
+            </div>
+          ) : null}
+
+          <section className="conversation" aria-label={s.title}>
+            <div className="conversation__list">
+              {messages.length === 0 && !pending ? (
+                <div className="empty-state">
+                  <h1 className="empty-state__title">{s.emptyTitle}</h1>
+                  <p className="empty-state__description">
+                    {s.emptyDescription}
+                  </p>
+                </div>
+              ) : (
+                messages.map((m) => (
+                  <div
+                    key={m.id}
+                    className={
+                      m.role === "applicant"
+                        ? "message-bubble message-bubble--applicant"
+                        : "message-bubble"
+                    }
+                  >
+                    <span className="message-bubble__author">
+                      {m.role === "applicant" ? s.authorApplicant : aiAuthor}
+                    </span>
+                    <p className="message-bubble__body">{m.text}</p>
+                  </div>
+                ))
+              )}
+
+              {/* 응답 대기('생각 중') — AI측 말풍선 안에 작성자 라벨 + 대기
+                  인디케이터(스피너 + pendingText). aria-live="polite"로 응답
+                  대기 상태를 스크린리더가 낭독한다. 응답 도착 시 사라진다. */}
+              {pending && (
+                <div
+                  className="message-bubble conversation__pending"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span className="message-bubble__author">{aiAuthor}</span>
+                  <span className="loading">
+                    <span className="spinner" aria-hidden="true" />
+                    <span className="loading__text">{s.pendingText}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* composer — 입력(.input) + 전송(.btn) 묶음 */}
+          <form
+            className="composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void handleSend();
+            }}
+          >
+            {/* LLM 호출 실패 — 비차단 오류 토스트(색 + 아이콘 + 메시지 병행) */}
+            {error && (
+              <div className="toast toast--error" role="alert">
+                <span className="toast__icon" aria-hidden="true">
+                  !
+                </span>
+                <span className="toast__message">{error}</span>
+              </div>
+            )}
+            <div className="composer__row">
+              <textarea
+                className="input composer__field"
+                rows={2}
+                placeholder={s.composerPlaceholder}
+                aria-label={s.composerPlaceholder}
+                value={draft}
+                disabled={pending}
+                onChange={(e) => setDraft(e.target.value)}
+              />
+              <button type="submit" className="btn" disabled={!canSend}>
+                {s.sendAction}
+              </button>
+            </div>
+            <p className="composer__hint">
+              {provider === null
+                ? s.composerHintNoProvider
+                : !hasKey
+                  ? s.composerHintNoKey
+                  : s.composerHint}
+            </p>
+          </form>
+
+          <div className="flow-actions">
+            <button
+              type="button"
+              className="btn btn--low-emphasis"
+              onClick={() => navigate(prevStepPath(token, "solve")!)}
+            >
+              {s.backAction}
+            </button>
+            <button type="button" className="btn" onClick={openConfirm}>
+              {s.primaryAction}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 제출 확인 모달(modal 프리미티브) — 되돌릴 수 없는 제출을 한 번 더 확인.

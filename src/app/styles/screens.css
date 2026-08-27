@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
   width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
   max-width: var(--container-width-md);
   padding: var(--space-xl);
@@ -62,6 +63,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm); /* eyebrow·제목·설명 사이 세로 간격 */
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
   width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
   max-width: var(--container-width-md); /* sizing: 집중 흐름 읽기 폭 */
   padding: var(--space-xl); /* 카드 안쪽 여백(넉넉한 여백, 원칙 1) */
@@ -117,6 +119,7 @@
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-sm);
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
   width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
   padding: var(--space-lg);
   background-color: var(--surface-base);

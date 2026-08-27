@@ -1,0 +1,459 @@
+/*
+ * Flow screens — 본인 확인 2단 레이아웃 · 스캔 연출 · 풀이 2단계
+ * ---------------------------------------------------------------------------
+ * 흐름 4단계 화면 중 "연출이 붙는" 두 곳의 레이아웃을 담당한다.
+ *
+ *   .split-panel   — 본인 확인: 좌 스캔 연출 / 우 입력 폼
+ *   .scan          — 그 좌측의 스캔 연출(글이 흘러가고 한 띠만 또렷)
+ *   .solve-connect — 풀이 1단계(본인 AI 연결)
+ *   .solve-layout  — 풀이 2단계: 좌 경과 시간·구름 / 우 문제 고정 + 대화
+ *
+ * 색·간격·서체는 tokens.css의 var(--token)만 참조한다(하드코딩 0).
+ * display·position·z-index·회전 각도·마스크 위치·애니메이션 타이밍처럼 "값을
+ * 바꿔도 사용자가 색·간격으로 인지하지 못하는" 구조·구현 설정값만 리터럴이다.
+ * ---------------------------------------------------------------------------
+ */
+
+/* ── 본인 확인 — 2단 레이아웃 ────────────────────────────────────────── */
+
+.split-panel {
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
+  display: grid;
+  grid-template-columns: var(--split-aside-width) 1fr; /* 구조값 */
+  width: 100%; /* 구조값 */
+  overflow: hidden; /* 구조값 — 어두운 패널의 모서리를 카드 곡률에 맞춰 자른다 */
+  background-color: var(--surface-base);
+  border: var(--border-width-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.split-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+}
+
+/* 2단이 좁아지면 위아래로 쌓는다 — 연출이 먼저, 입력이 아래 */
+@media (max-width: 52rem) {
+  .split-panel {
+    grid-template-columns: 1fr; /* 구조값 */
+  }
+}
+
+/* 좌우 정렬이 기본인 flow-screen 안에서, 2단 폼은 왼쪽 정렬로 읽는다 */
+.empty-state--start {
+  align-items: flex-start; /* 구조값 */
+  text-align: left; /* 구조값 */
+}
+
+.flow-actions--start {
+  justify-content: flex-start; /* 구조값 */
+}
+
+/* ── 스캔 연출 ───────────────────────────────────────────────────────── */
+
+.scan {
+  position: relative; /* 구조값 — 겹치는 두 레이어의 기준 */
+  overflow: hidden; /* 구조값 — 흘러나가는 글을 패널 안에서 자른다 */
+  min-height: var(--panel-min-height);
+  padding: var(--space-lg);
+  background-color: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  perspective: 900px; /* 구현 설정값 — 원근의 깊이 */
+}
+
+/* 패널이 무엇을 보여 주는 자리인지 알리는 작은 라벨 */
+.scan__label {
+  position: relative; /* 구조값 — 글 레이어 위로 */
+  z-index: 2; /* 구현 설정값 */
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-subtle);
+}
+
+/*
+ * 두 겹은 완전히 같은 자리에 포개진다. 아래가 흐린 바닥, 위가 또렷한 띠다.
+ * 띠(마스크)는 **패널 좌표**에 고정되어 있고 글만 위로 흐르기 때문에, 초점이
+ * 늘 같은 자리에 머문다.
+ */
+.scan__layer {
+  position: absolute; /* 구조값 */
+  inset: 0; /* 구조값 */
+  z-index: 1; /* 구현 설정값 */
+}
+
+.scan__layer--blur {
+  filter: blur(5px); /* 구현 설정값 */
+  opacity: 0.42; /* 구현 설정값 */
+}
+
+.scan__layer--sharp {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 12%,
+    #000 22%,
+    #000 40%,
+    transparent 52%
+  ); /* 구현 설정값 — 또렷하게 통과시킬 가로 띠 */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 12%,
+    #000 22%,
+    #000 40%,
+    transparent 52%
+  );
+}
+
+/* 원근으로 기울어 눕힌 글판 — 활성 단어에 맞춰 위로 밀린다 */
+.scan__stage {
+  position: absolute; /* 구조값 */
+  top: 0; /* 구조값 */
+  right: 0; /* 구조값 */
+  left: 0; /* 구조값 */
+  padding: var(--space-2xl) var(--space-xl);
+  transform: rotateX(32deg) rotateZ(-6deg) scale(0.94)
+    translateY(var(--scan-shift, 0px)); /* 구현 설정값 */
+  transform-origin: 50% 0%; /* 구조값 */
+  transition: transform 0.42s ease; /* 구현 설정값 */
+}
+
+.scan__text {
+  margin: 0;
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-relaxed);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-on-inverse);
+}
+
+.scan__word {
+  border-radius: var(--radius-sm);
+}
+
+/* 지금 훑고 있는 단어 — 참고 영상의 파란 하이라이트 */
+.scan__word--active {
+  background-color: var(--accent-default);
+  color: var(--text-on-accent);
+  box-shadow: 0 0 0 var(--space-3xs) var(--accent-default);
+}
+
+/* 모션 축소 — 글을 눕히지도, 흐르게 하지도 않는다(문장은 그대로 읽힌다) */
+@media (prefers-reduced-motion: reduce) {
+  .scan__stage {
+    transform: none;
+    transition: none;
+  }
+  .scan__layer--blur {
+    display: none;
+  }
+  .scan__layer--sharp {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* ── 풀이 1단계 — 본인 AI 연결 ───────────────────────────────────────── */
+
+.solve-connect {
+  gap: var(--space-xl);
+}
+
+.solve-connect__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* 하위 단계 표시(Step 1 of 2) — 흐름 4단계 표시자와 혼동되지 않게 작고 조용히 */
+.solve-phase-label {
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-muted);
+}
+
+.solve-connect__title {
+  margin: 0;
+  font-size: var(--text-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+.solve-connect__lead {
+  margin: 0;
+  font-size: var(--text-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-default);
+}
+
+.solve-connect__body {
+  margin: 0;
+  font-size: var(--text-size-md);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-muted);
+}
+
+/* 키가 어디에도 남지 않는다는 약속 — 정보(info) 톤으로 한 번 더 세운다 */
+.solve-connect__privacy {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--status-info-subtle);
+  border-left: var(--border-width-md) solid var(--status-info);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-default);
+}
+
+.solve-connect__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* 건너뛰면 무슨 일이 생기는지 버튼 옆에 그대로 적는다 */
+.solve-connect__skip-note {
+  margin: 0;
+  font-size: var(--text-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--text-muted);
+}
+
+/* ── 풀이 2단계 — 2단 레이아웃 ───────────────────────────────────────── */
+
+.solve-layout {
+  display: grid;
+  grid-template-columns: var(--split-aside-width) 1fr; /* 구조값 */
+  align-items: start; /* 구조값 */
+  gap: var(--space-lg);
+  width: 100%; /* 구조값 */
+}
+
+@media (max-width: 52rem) {
+  .solve-layout {
+    grid-template-columns: 1fr; /* 구조값 */
+  }
+}
+
+/* 좌측 레일 — 하늘 한 조각. 대화 옆에서 시간만 조용히 알린다 */
+.solve-aside {
+  box-sizing: border-box; /* 구조값 */
+  /* sticky는 relative처럼 배치 기준도 겸한다 — 구름 레이어가 이 안에 갇힌다.
+     스크롤을 내려도 시간이 따라오게 해, 대화가 길어져도 곁눈에 남는다. */
+  position: sticky; /* 구조값 */
+  top: var(--space-lg); /* 구조값 */
+  overflow: hidden; /* 구조값 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: var(--panel-min-height);
+  padding: var(--space-lg);
+  /* 위아래 모두 짙은 하늘로 — 흰 글씨(경과 시간·안내)의 대비를 지키기 위해
+     아래쪽이 옅어지는 히어로 그라디언트를 그대로 쓰지 않는다. */
+  background-image: linear-gradient(
+    180deg,
+    var(--hero-sky-top) 0%,
+    var(--hero-sky-mid) 100%
+  );
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.solve-aside__content {
+  position: relative; /* 구조값 — 구름 위로 */
+  z-index: 1; /* 구현 설정값 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.solve-aside .solve-phase-label {
+  color: var(--hero-text-soft);
+}
+
+/* 경과 시간 */
+.solve-timer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.solve-timer__label {
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--hero-text-strong);
+}
+
+.solve-timer__value {
+  font-family: var(--font-family-mono);
+  font-size: var(--text-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--hero-text-strong);
+  font-variant-numeric: tabular-nums; /* 구조값 — 숫자가 흔들리지 않게 */
+}
+
+.solve-timer__hint {
+  font-size: var(--text-size-xs);
+  line-height: var(--line-height-normal);
+  color: var(--hero-text-soft);
+}
+
+/* 흘러가는 구름 */
+.drifting-clouds {
+  position: absolute; /* 구조값 */
+  inset: 0; /* 구조값 */
+  z-index: 0; /* 구현 설정값 */
+  overflow: hidden; /* 구조값 */
+  pointer-events: none; /* 구조값 */
+}
+
+.drifting-clouds__cloud {
+  position: absolute; /* 구조값 */
+  left: 0; /* 구조값 */
+  width: 60%; /* 구조값 */
+  animation: cloud-drift var(--cloud-duration) linear infinite; /* 구현 설정값 */
+  animation-delay: var(--cloud-delay); /* 구현 설정값 */
+}
+
+.drifting-clouds__cloud svg {
+  display: block; /* 구조값 */
+  width: 100%; /* 구조값 */
+  height: auto; /* 구조값 */
+  fill: var(--hero-cloud);
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-70%) scale(var(--cloud-scale)); /* 구현 설정값 */
+  }
+  to {
+    transform: translateX(230%) scale(var(--cloud-scale)); /* 구현 설정값 */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drifting-clouds__cloud {
+    animation: none;
+    transform: translateX(60%) scale(var(--cloud-scale));
+  }
+}
+
+/* 우측 — 문제 고정 + 대화 */
+.solve-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0; /* 구조값 — 그리드 칸 안에서 축소 허용 */
+}
+
+/* 대화 위에 붙어 따라오는 배정 문제 */
+.problem-pin {
+  box-sizing: border-box; /* 구조값 */
+  position: sticky; /* 구조값 — 대화를 내려도 문제가 머리에 남는다 */
+  top: var(--space-lg); /* 구조값 */
+  z-index: 1; /* 구현 설정값 — 말풍선 위로 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--surface-base);
+  border: var(--border-width-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.problem-pin__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.problem-pin__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  min-width: 0; /* 구조값 */
+}
+
+.problem-pin__eyebrow {
+  font-size: var(--text-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--text-muted);
+}
+
+.problem-pin__title {
+  margin: 0;
+  font-size: var(--text-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+.problem-pin__body {
+  margin: 0;
+  padding-top: var(--space-sm);
+  border-top: var(--border-width-sm) solid var(--border-subtle);
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-default);
+  white-space: pre-line; /* 구조값 — 문제 원문의 줄바꿈 유지 */
+}
+
+/* AI 미연결 안내 — 경고 톤으로, 되돌아갈 문과 함께 */
+.solve-notconnected {
+  box-sizing: border-box; /* 구조값 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 구조값 */
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--status-warning-subtle);
+  border: var(--border-width-sm) solid var(--status-warning);
+  border-radius: var(--radius-lg);
+}
+
+.solve-notconnected__title {
+  margin: 0;
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+.solve-notconnected__body {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-default);
+}
+
+/* ── 좁은 화면 — 연출 패널이 본문을 밀어내지 않게 낮춘다 ─────────────── */
+
+@media (max-width: 52rem) {
+  /*
+   * 2단이 위아래로 쌓이면 연출이 먼저 오는데, 데스크톱 높이(26rem)를 그대로
+   * 두면 정작 채워야 할 폼·대화가 화면 밖으로 밀려난다. 연출은 맥락이지 본문이
+   * 아니므로 높이를 줄여 본문이 첫 화면에 들어오게 한다.
+   */
+  .scan {
+    min-height: 15rem;
+  }
+
+  .solve-aside {
+    /* 모바일에서는 위에 붙어 따라다닐 자리가 없다 — 그냥 한 칸으로 눕힌다 */
+    position: static; /* 구조값 */
+    min-height: 0; /* 구조값 */
+  }
+
+  /* 시간 표시는 한 줄 띠로 — 세로 공간을 대화에 넘긴다 */
+  .solve-timer__value {
+    font-size: var(--text-size-2xl);
+  }
+}

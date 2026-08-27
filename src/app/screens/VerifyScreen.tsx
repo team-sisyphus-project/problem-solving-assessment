@@ -14,6 +14,10 @@
  * 가드가 흐름 전체에 걸쳐 담당한다 — 제출됨이면 본인 확인 인덱스에 도달하기
  * 전에 셸이 잠금 안내로 대체하므로, 이 화면은 미제출 상태만 다룬다.
  *
+ * 화면은 2단 구성이다. 왼쪽은 배정된 문제를 훑어 내려가는 스캔 연출(ProblemScan)
+ * 로, 폼을 채우는 동안 "무엇을 보는 자리인가"를 읽게 한다. 오른쪽이 실제 입력이다.
+ * 좁은 화면에서는 위아래로 쌓인다.
+ *
  * 실제 이메일 인증·서버 검증은 범위 밖 — 형식 검증만 로컬로 수행한다.
  * 하드코딩 스타일 0 — 모든 시각 표현은 프리미티브(.input/.empty-state/.btn)와
  * screens.css의 토큰 클래스에만 의존한다.
@@ -25,6 +29,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath } from "../flow";
 import { strings } from "../i18n";
 import { setCandidate } from "../session/store";
+import { ProblemScan } from "./verify/ProblemScan";
 
 /** 최소 이메일 형식 검증(로컬) — 실제 인증은 범위 밖 */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,71 +78,77 @@ export function VerifyScreen() {
 
   return (
     <div className="flow-screen">
-      <div className="flow-panel">
-        <div className="empty-state">
-          <h1 className="empty-state__title">{s.title}</h1>
-          <p className="empty-state__description">{s.description}</p>
+      <div className="split-panel">
+        {/* 좌 — 문제를 훑어 내려가는 연출. 폼과 나란히 두어 맥락을 준다 */}
+        <ProblemScan />
+
+        {/* 우 — 실제 입력(이름·이메일) */}
+        <div className="split-panel__form">
+          <div className="empty-state empty-state--start">
+            <h1 className="empty-state__title">{s.title}</h1>
+            <p className="empty-state__description">{s.description}</p>
+          </div>
+
+          <form className="verify-form" noValidate onSubmit={handleSubmit}>
+            <div className="input-field">
+              <label className="input-field__label" htmlFor="verify-name">
+                {s.nameLabel}
+              </label>
+              <input
+                id="verify-name"
+                className={errors.name ? "input input--error" : "input"}
+                type="text"
+                autoComplete="name"
+                placeholder={s.namePlaceholder}
+                value={name}
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? nameErrorId : undefined}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+                }}
+              />
+              {errors.name && (
+                <p id={nameErrorId} className="input-field__error" role="alert">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            <div className="input-field">
+              <label className="input-field__label" htmlFor="verify-email">
+                {s.emailLabel}
+              </label>
+              <input
+                id="verify-email"
+                className={errors.email ? "input input--error" : "input"}
+                type="email"
+                autoComplete="email"
+                placeholder={s.emailPlaceholder}
+                value={email}
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? emailErrorId : undefined}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+                }}
+              />
+              {errors.email ? (
+                <p id={emailErrorId} className="input-field__error" role="alert">
+                  {errors.email}
+                </p>
+              ) : (
+                <p className="input-field__helper">{s.formHint}</p>
+              )}
+            </div>
+
+            <div className="flow-actions flow-actions--start">
+              <button type="submit" className="btn">
+                {s.primaryAction}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form className="verify-form" noValidate onSubmit={handleSubmit}>
-          <div className="input-field">
-            <label className="input-field__label" htmlFor="verify-name">
-              {s.nameLabel}
-            </label>
-            <input
-              id="verify-name"
-              className={errors.name ? "input input--error" : "input"}
-              type="text"
-              autoComplete="name"
-              placeholder={s.namePlaceholder}
-              value={name}
-              aria-invalid={errors.name ? true : undefined}
-              aria-describedby={errors.name ? nameErrorId : undefined}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
-              }}
-            />
-            {errors.name && (
-              <p id={nameErrorId} className="input-field__error" role="alert">
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          <div className="input-field">
-            <label className="input-field__label" htmlFor="verify-email">
-              {s.emailLabel}
-            </label>
-            <input
-              id="verify-email"
-              className={errors.email ? "input input--error" : "input"}
-              type="email"
-              autoComplete="email"
-              placeholder={s.emailPlaceholder}
-              value={email}
-              aria-invalid={errors.email ? true : undefined}
-              aria-describedby={errors.email ? emailErrorId : undefined}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
-              }}
-            />
-            {errors.email ? (
-              <p id={emailErrorId} className="input-field__error" role="alert">
-                {errors.email}
-              </p>
-            ) : (
-              <p className="input-field__helper">{s.formHint}</p>
-            )}
-          </div>
-
-          <div className="flow-actions">
-            <button type="submit" className="btn">
-              {s.primaryAction}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

@@ -25,6 +25,7 @@
  * 읽기 폭은 sizing/base(container-width-lg). 셸(container--wide)도 lg라 정합.
  * ========================================================================= */
 .conversation {
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
   display: flex;
   flex-direction: column;
   width: 100%; /* 구조값 — 셸 컨테이너 폭에 맞춤 */
@@ -151,6 +152,7 @@
  * 입력은 input 프리미티브(.input)를, 전송은 button 프리미티브(.btn)를 재사용.
  * ========================================================================= */
 .composer {
+  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
   display: flex;
   flex-direction: column;
   gap: var(--space-sm); /* 힌트·입력·버튼 사이 */

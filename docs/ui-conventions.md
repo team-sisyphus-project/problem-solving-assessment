@@ -173,6 +173,31 @@
 | 배정 문제 | `.problem-brief` |
 | 대화 · 작성창 · 제공자 선택 | `.conversation` · `.composer` · `.provider-group` |
 
+### 연출이 붙는 흐름 화면 (본인 확인 · 문제 풀이)
+
+두 화면만 2단 레이아웃과 모션을 쓴다. 스타일은
+[`src/app/styles/flow-screens.css`](../src/app/styles/flow-screens.css)(로드 순서 7번),
+컴포넌트는 `src/app/screens/verify/` · `src/app/screens/solve/`에 있다.
+
+| 자리 | 클래스 |
+|---|---|
+| 본인 확인 2단 | `.split-panel` > (`.scan` \| `.split-panel__form`) |
+| 스캔 연출 | `.scan` > `.scan__label` · `.scan__layer--{blur,sharp}` > `.scan__stage` > `.scan__text` > `.scan__word(--active)` |
+| 풀이 1단계 | `.solve-connect` (`.solve-phase-label` · `__title` · `__lead` · `__body` · `__privacy` · `__actions`) |
+| 풀이 2단계 | `.solve-layout` > (`.solve-aside` + `.solve-main`) |
+| 좌측 레일 | `.solve-aside` > `.drifting-clouds` + `.solve-aside__content` > `.solve-timer` |
+| 문제 고정 | `.problem-pin` (`__head` · `__heading` · `__eyebrow` · `__title` · `__body`) |
+
+- **스캔 연출은 두 겹을 포갠다.** 아래가 흐린 바닥, 위가 또렷한 띠다. 띠(마스크)는
+  **패널 좌표에 고정**되어 있고 글만 위로 흐른다 — 마스크를 움직이면 글과 어긋난다.
+- **문단은 장식이 아니다.** 스크린리더에는 평범한 문단으로 읽히고, 단어 span은 연출용이다.
+- **풀이의 두 단계는 흐름 단계가 아니다.** `FLOW_STEPS`는 그대로 4개이며, 하위 단계는
+  `.solve-phase-label`("Step 1 of 2")로만 알린다 — 단계 표시자(stepper)와 혼동되지 않게 작게.
+- **경과 시간은 카운트다운이 아니다.** 답이 아니라 과정을 보는 자리라 시간 압박이 목적과
+  어긋난다. 올라가는 시계만 두고 "제한 없음"을 문구로 함께 밝힌다.
+- **모션은 전부 `prefers-reduced-motion`에서 멈춘다** — 스캔은 눕지도 흐르지도 않고,
+  구름은 제자리에 선다. 문장·정보는 그대로 남는다.
+
 ### 버튼
 
 `.btn`은 알약형(`--radius-full`)이다. 웰컴 인트로의 CTA만 `.btn--hero`로 입체(압출면 +

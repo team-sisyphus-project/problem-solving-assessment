@@ -51,6 +51,9 @@ function selectProviderAndKey() {
     screen.getByLabelText(`${strings.providers.gpt} ${s.keyFieldLabel}`),
     { target: { value: API_KEY } },
   );
+  // 풀이 화면은 1단계(본인 AI 연결) → 2단계(대화)로 나뉜다. 연결을 마쳤으면
+  // "연결하고 계속"으로 대화 단계에 들어간다.
+  fireEvent.click(screen.getByRole("button", { name: s.phaseConnectAction }));
 }
 
 function sendMessage(text: string) {

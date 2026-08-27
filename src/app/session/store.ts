@@ -56,6 +56,15 @@ export interface InviteSession {
   messages: ChatMessage[];
   /** 제출 시각(ISO). 미제출이면 null */
   submittedAt: string | null;
+  /**
+   * 문제 풀이를 시작한 시각(ISO). 풀이 화면의 경과 시간 표시가 이 값을 기준으로
+   * 센다. 새로고침해도 시간이 0으로 되돌아가지 않도록 세션에 남긴다.
+   * 아직 시작하지 않았으면 null이며, 제한 시간이 아니라 **경과 시간**이다.
+   *
+   * 평가 재료(EvaluationRecord)에는 싣지 않는다 — 지원자가 스스로 속도를
+   * 가늠하기 위한 화면 표시일 뿐, 평가 기준이 아니다.
+   */
+  startedAt: string | null;
 }
 
 /**
@@ -106,7 +115,9 @@ export function getSession(token: string): InviteSession | null {
   const raw = store.getItem(storageKey(token));
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as InviteSession;
+    const parsed = JSON.parse(raw) as InviteSession;
+    // startedAt은 나중에 추가된 필드라, 이전에 저장된 세션에는 없을 수 있다.
+    return { ...parsed, startedAt: parsed.startedAt ?? null };
   } catch {
     return null;
   }
@@ -132,9 +143,23 @@ export function getOrCreateSession(token: string): InviteSession {
     problem: assignProblem(token),
     messages: [],
     submittedAt: null,
+    startedAt: null,
   };
   saveSession(created);
   return created;
+}
+
+/**
+ * 문제 풀이 시작 시각을 기록한다(이미 시작했으면 기존 시각 유지).
+ * 풀이 화면에 처음 도달한 순간 한 번만 찍히고, 이후 재진입·새로고침에도
+ * 같은 기준점이 유지된다.
+ */
+export function markStarted(token: string): InviteSession {
+  const session = getOrCreateSession(token);
+  if (session.startedAt) return session;
+  const next = { ...session, startedAt: new Date().toISOString() };
+  saveSession(next);
+  return next;
 }
 
 /** 지원자 식별 정보를 기록한다(본인 확인 완료) */

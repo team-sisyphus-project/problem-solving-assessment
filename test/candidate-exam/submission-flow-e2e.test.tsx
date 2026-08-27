@@ -65,6 +65,10 @@ async function haveConversation() {
     screen.getByLabelText(`${strings.providers.gpt} ${solve.keyFieldLabel}`),
     { target: { value: API_KEY } },
   );
+  // 풀이는 1단계(본인 AI 연결) → 2단계(대화)로 나뉜다 — 연결 후 대화로 넘어간다.
+  fireEvent.click(
+    screen.getByRole("button", { name: solve.phaseConnectAction }),
+  );
   fireEvent.change(screen.getByLabelText(solve.composerPlaceholder), {
     target: { value: "풀이 질문" },
   });
