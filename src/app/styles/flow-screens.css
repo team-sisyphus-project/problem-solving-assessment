@@ -457,3 +457,82 @@
     font-size: var(--text-size-2xl);
   }
 }
+
+/* ── 지난 제출 안내 ──────────────────────────────────────────────────── */
+
+.previous {
+  align-items: stretch; /* 구조값 */
+}
+
+/* 무엇을 언제 냈는지 — 펼치지 않아도 보이는 요약 */
+.previous__summary {
+  display: grid;
+  grid-template-columns: max-content 1fr; /* 구조값 */
+  gap: var(--space-xs) var(--space-lg);
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
+  background-color: var(--surface-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* 각 행이 두 칸(용어·값)을 차지하도록 — dl 안의 묶음 div는 배치에서 투명하게 */
+.previous__row {
+  display: contents; /* 구조값 */
+}
+
+.previous__term {
+  font-size: var(--text-size-sm);
+  color: var(--text-muted);
+}
+
+.previous__value {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-strong);
+}
+
+/* 제출한 대화를 되읽는 자리 — 읽기 전용이라 작성창이 없다 */
+.previous__log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-height: 24rem; /* 구조값 — 길어져도 화면을 삼키지 않게 */
+  overflow-y: auto; /* 구조값 */
+  padding: var(--space-md);
+  background-color: var(--surface-subtle);
+  border-radius: var(--radius-md);
+}
+
+.previous__empty {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  color: var(--text-muted);
+}
+
+/*
+ * 다시 시작 제안 — 되돌릴 수 없는 성격의 선택이라 구분선으로 분리해 둔다.
+ * 색은 경고가 아니라 무채색이다. 지난 제출이 지워지지 않으므로 겁줄 이유가 없다.
+ */
+.previous__restart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding-top: var(--space-lg);
+  border-top: var(--border-width-sm) solid var(--border-subtle);
+}
+
+.previous__restart-title {
+  margin: 0;
+  font-size: var(--text-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+.previous__restart-body {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-muted);
+}

@@ -7,9 +7,14 @@
  *
  * `tone`으로 두 배경을 모두 지원한다 — 짙은 하늘 위(`on-sky`)에서는 흰색,
  * 흰 헤더 위(`on-surface`)에서는 무채색 텍스트 토큰을 쓴다.
+ *
+ * `to`를 주면 링크가 된다. 헤더의 마크는 처음(웰컴)으로 돌아가는 문이며,
+ * 제출을 마친 뒤에도 막히지 않는다 — 지원자가 언제든 첫 화면으로 나갈 수 있어야
+ * 갇힌 느낌이 들지 않는다.
  * ---------------------------------------------------------------------------
  */
 
+import { Link } from "react-router-dom";
 import { strings } from "../i18n";
 
 /** 6갈래 = 캡슐 3개 × 60° */
@@ -17,11 +22,13 @@ const ARM_ANGLES = [0, 60, 120];
 
 interface BrandMarkProps {
   tone: "on-sky" | "on-surface";
+  /** 주면 이 경로로 가는 링크가 된다. 없으면 단순 표시 */
+  to?: string;
 }
 
-export function BrandMark({ tone }: BrandMarkProps) {
-  return (
-    <span className={`brand-mark brand-mark--${tone}`}>
+export function BrandMark({ tone, to }: BrandMarkProps) {
+  const content = (
+    <>
       <svg
         className="brand-mark__glyph"
         viewBox="0 0 24 24"
@@ -42,6 +49,20 @@ export function BrandMark({ tone }: BrandMarkProps) {
         ))}
       </svg>
       <span className="brand-mark__word">{strings.app.productName}</span>
-    </span>
+    </>
+  );
+
+  if (!to) {
+    return <span className={`brand-mark brand-mark--${tone}`}>{content}</span>;
+  }
+
+  return (
+    <Link
+      className={`brand-mark brand-mark--${tone} brand-mark--link`}
+      to={to}
+      aria-label={strings.app.homeLabel}
+    >
+      {content}
+    </Link>
   );
 }

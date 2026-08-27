@@ -198,6 +198,19 @@
 - **모션은 전부 `prefers-reduced-motion`에서 멈춘다** — 스캔은 눕지도 흐르지도 않고,
   구름은 제자리에 선다. 문장·정보는 그대로 남는다.
 
+### 제출 후 재진입 — 지난 제출 안내
+
+셸 가드가 잠금 대신 `PreviousSubmission`을 렌더한다. 클래스는 `.previous`(=`.flow-panel`)
+> `.previous__summary`(`__row`·`__term`·`__value`) · `.previous__log` · `.previous__restart`.
+
+- **지난 제출을 지우지 않는다.** "새 문제로 시작"은 덮어쓰기가 아니라 `history`로 옮기는
+  것이다. 문구(`restartBody`)로도 그 사실을 먼저 말한다 — 지울 것처럼 읽히면 안 된다.
+- **경고 색을 쓰지 않는다.** 잃는 것이 없으므로 겁줄 이유가 없다(무채색 + 구분선).
+- **브랜드 마크는 링크다.** `BrandMark`에 `to`를 주면 `.brand-mark--link`가 되어 처음으로
+  돌아간다. 제출 후에도 막지 않는다.
+- **날짜·시각은 앱 로케일로 찍는다.** `toLocaleString()`을 인자 없이 쓰면 한국어 브라우저에서
+  한글이 섞인다 — `defaultLocale`을 명시한다(회귀는 english-only 테스트가 막는다).
+
 ### 버튼
 
 `.btn`은 알약형(`--radius-full`)이다. 웰컴 인트로의 CTA만 `.btn--hero`로 입체(압출면 +

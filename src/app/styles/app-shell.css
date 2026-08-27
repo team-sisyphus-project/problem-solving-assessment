@@ -143,6 +143,22 @@ body {
   letter-spacing: var(--letter-spacing-tight);
 }
 
+/* 링크가 된 마크 — 밑줄 없이 글자색만 이어받고, 눌릴 수 있음을 커서로 알린다 */
+.brand-mark--link {
+  cursor: pointer; /* 구현 설정값 */
+  text-decoration: none; /* 구조값 */
+  border-radius: var(--radius-sm);
+}
+
+.brand-mark--link:hover .brand-mark__word {
+  text-decoration: underline; /* 구조값 — 링크임을 hover에서 분명히 */
+}
+
+.brand-mark--link:focus-visible {
+  outline: var(--border-width-md) solid var(--border-focus);
+  outline-offset: var(--space-3xs);
+}
+
 .brand-mark--on-surface {
   color: var(--text-strong);
 }

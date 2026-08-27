@@ -21,17 +21,17 @@
  * 모션·3D를 못 쓰는 환경(prefers-reduced-motion · WebGL 미지원 · 로드 실패)에서는
  * 같은 카피·레이아웃을 유지한 채 오브젝트만 정적 SVG로 대체된다(스펙 흐름 5).
  *
- * 제출 후 잠금(SC-4/M-5)은 셸 계층 가드의 몫이라 인트로에는 잠금 UI가 없다.
- * 대신 이미 제출된 토큰이면 인트로를 건너뛰고 흐름 첫 단계로 보내, 셸이 잠금
- * 안내를 띄우게 한다 — 끝난 응시에 환영 화면을 다시 보여 주지 않기 위해서다.
+ * 제출 여부와 무관하게 언제나 이 화면이 뜬다. 헤더의 브랜드 마크가 여기로 오는
+ * 문이기도 해서, 제출을 마친 뒤에도 첫 화면으로 나올 수 있어야 갇힌 느낌이 들지
+ * 않는다. 이미 제출한 사람이 CTA를 누르면 흐름 첫 단계에서 셸이 **지난 제출
+ * 안내**를 띄우고, 거기서 새로 시작할지 묻는다(잠그지 않는다).
  * ---------------------------------------------------------------------------
  */
 
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { firstStepPath } from "../flow";
 import { strings } from "../i18n";
-import { isSubmitted } from "../session/store";
 import { BrandMark } from "../shell/BrandMark";
 import { GlassAsterisk } from "./welcome/GlassAsterisk";
 import { SkyBackdrop } from "./welcome/SkyBackdrop";
@@ -66,11 +66,6 @@ export function WelcomeScreen() {
 
   // 모션 축소 요청이거나 3D를 띄울 수 없으면 정적 오브젝트로 대체한다.
   const useStaticObject = prefersReducedMotion || webglUnavailable;
-
-  // 이미 제출된 초대 링크 — 인트로를 건너뛰고 흐름 첫 단계(셸 잠금 안내)로.
-  if (isSubmitted(token)) {
-    return <Navigate to={firstStepPath(token)} replace />;
-  }
 
   return (
     <div className="welcome">

@@ -43,6 +43,16 @@ describe("언어 정책 — 영어 전용 (한국어 미지원)", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("화면에 찍히는 날짜·시각도 영어로 나온다(브라우저 로케일에 끌려가지 않게)", () => {
+    // toLocaleString()을 인자 없이 쓰면 한국어 브라우저에서 "오후 9:28"처럼
+    // 한글이 섞인다. 앱 로케일을 명시했는지 여기서 못박는다.
+    const rendered = new Date("2026-08-27T12:28:58.000Z").toLocaleString(
+      defaultLocale,
+      { dateStyle: "medium", timeStyle: "short" },
+    );
+    expect(HANGUL.test(rendered)).toBe(false);
+  });
+
   it("목업 문제 데이터(제목·설명)에도 한글이 없다", () => {
     const offenders = PROBLEM_POOL.filter(
       (problem) => HANGUL.test(problem.title) || HANGUL.test(problem.description),

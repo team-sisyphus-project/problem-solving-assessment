@@ -40,6 +40,7 @@ const solve = strings.screens.solve;
 const modal = strings.screens.solve.submitModal;
 const complete = strings.screens.complete;
 const verify = strings.screens.verify;
+const previous = strings.screens.previous;
 
 /** 프로덕션과 동형인 중첩 라우트(AppShell = 레이아웃 + 4단계 자식)로 렌더한다.
  * "최종 제출" 확정 후 navigate(/complete)가 실제로 일어나므로 완료 라우트도 포함. */
@@ -76,12 +77,16 @@ async function haveConversation() {
   expect(await screen.findByText("AI 응답")).toBeInTheDocument();
 }
 
-/** 잠금 안내(재응시 불가)가 표시되었는지 확인한다. */
+/** 지난 제출 안내(막지 않고 묻는 화면)가 표시되었는지 확인한다. */
 function expectLocked() {
   expect(
-    screen.getByRole("heading", { name: verify.lockTitle }),
+    screen.getByRole("heading", { name: previous.title }),
   ).toBeInTheDocument();
-  expect(screen.getByText(verify.lockDescription)).toBeInTheDocument();
+  expect(screen.getByText(previous.description)).toBeInTheDocument();
+  // 막는 화면이 아니다 — 다시 시작할 문이 함께 있다.
+  expect(
+    screen.getByRole("button", { name: previous.restartAction }),
+  ).toBeInTheDocument();
 }
 
 describe("제출 흐름 E2E — 모달 → 확정 → 완료 → 재진입 잠금 (SC-4/M-4·M-5)", () => {
@@ -148,7 +153,7 @@ describe("제출 흐름 E2E — 모달 → 확정 → 완료 → 재진입 잠�
     expect(isSubmitted(TOKEN)).toBe(true);
   });
 
-  it("제출 후 같은 초대 링크(인덱스)로 재접속하면 잠금 안내만 보인다 (SC-4/M-5)", async () => {
+  it("제출 후 같은 초대 링크(인덱스)로 재접속하면 지난 제출 안내가 뜬다 (SC-4/M-5 개정)", async () => {
     renderFlowAt("/solve");
     await haveConversation();
     fireEvent.click(screen.getByRole("button", { name: solve.primaryAction }));
@@ -166,7 +171,7 @@ describe("제출 흐름 E2E — 모달 → 확정 → 완료 → 재진입 잠�
     ).not.toBeInTheDocument();
   });
 
-  it("제출 후 /solve 딥링크로 재접속해도 채팅/재제출 없이 잠금 안내만 보인다 (SC-4/M-5)", async () => {
+  it("제출 후 /solve 딥링크로 재접속해도 채팅/재제출 없이 지난 제출 안내가 뜬다 (SC-4/M-5 개정)", async () => {
     renderFlowAt("/solve");
     await haveConversation();
     fireEvent.click(screen.getByRole("button", { name: solve.primaryAction }));

@@ -24,6 +24,8 @@ export const en = {
     productName: "Problem Solving Assessment",
     /** 헤더에 붙는 현재 맥락(응시 흐름) 라벨 */
     context: "Candidate assessment",
+    /** 브랜드 마크는 처음(웰컴)으로 돌아가는 링크다 — 링크의 접근성 이름 */
+    homeLabel: "Back to the start",
   },
 
   /** 단계 표시자(navigation) 접근성 라벨 */
@@ -81,10 +83,34 @@ export const en = {
       errorNameRequired: "Please enter your name.",
       errorEmailRequired: "Please enter your email.",
       errorEmailInvalid: "Please enter a valid email address.",
-      /** 제출 후 재응시 잠금 안내(empty-state 재사용, SC-4/M-5) */
-      lockTitle: "This assessment has been submitted",
-      lockDescription:
-        "This invitation link has already been used to submit an assessment, so it cannot be taken again. Your submission is now with the hiring team.",
+    },
+    /**
+     * 지난 제출 안내 — 이미 제출한 링크로 흐름에 다시 들어왔을 때.
+     *
+     * 예전에는 여기서 흐름을 잠갔다. 지금은 막지 않고 **선택지를 준다** —
+     * 지난 제출을 열어 보거나, 그대로 두고 새 문제로 다시 시작하거나.
+     * 어느 쪽을 고르든 지난 제출은 지워지지 않는다는 점을 분명히 말한다.
+     */
+    previous: {
+      title: "You have already submitted this assessment",
+      description:
+        "Your earlier submission is on record and is with the hiring team. You can read it back below, or leave it as it is and start again with a different problem.",
+      /** 지난 제출 펼치기/접기 */
+      viewAction: "Read my submission",
+      hideAction: "Hide my submission",
+      /** 요약 항목 라벨 */
+      submittedAtLabel: "Submitted",
+      problemLabel: "Problem",
+      messagesLabel: "Messages exchanged",
+      attemptLabel: "Attempt",
+      /** 대화가 한 건도 없이 제출된 경우 */
+      emptyLog: "No messages were recorded in this submission.",
+      /** 다시 시작 제안 */
+      restartTitle: "Start again with a new problem?",
+      restartBody:
+        "Starting again does not erase anything. Your earlier submission stays on record, you will be given a different problem, and you begin from the top.",
+      restartAction: "Start a new problem",
+      keepAction: "Leave it as it is",
     },
     brief: {
       stepLabel: "Your problem",

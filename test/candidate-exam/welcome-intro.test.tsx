@@ -99,15 +99,32 @@ describe("웰컴 인트로 (흐름 4단계 앞단)", () => {
     expect(firstStepPath(TOKEN)).toBe(`${welcomePath(TOKEN)}/verify`);
   });
 
-  it("이미 제출된 토큰은 인트로 대신 잠금 안내로 대체된다", () => {
+  it("이미 제출된 토큰이어도 인트로는 그대로 뜬다(막지 않는다)", () => {
     markSubmitted(TOKEN);
     renderAt(welcomePath(TOKEN));
 
-    expect(screen.queryByText(welcome.eyebrow)).not.toBeInTheDocument();
+    // 헤더의 브랜드 마크가 여기로 오는 문이기도 하다 — 제출 후에도 갇히지 않는다.
+    expect(screen.getByText(welcome.eyebrow)).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: verify.lockTitle }),
+      screen.getByRole("heading", { name: welcome.title }),
     ).toBeInTheDocument();
-    expect(screen.getByText(verify.lockDescription)).toBeInTheDocument();
+  });
+
+  it("제출한 뒤 CTA로 흐름에 들어가면 폼 대신 지난 제출 안내가 묻는다", () => {
+    markSubmitted(TOKEN);
+    renderAt(welcomePath(TOKEN));
+
+    fireEvent.click(screen.getByRole("button", { name: welcome.primaryAction }));
+
+    expect(
+      screen.getByRole("heading", { name: strings.screens.previous.title }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: strings.screens.previous.restartAction,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(verify.nameLabel)).not.toBeInTheDocument();
   });
 
   it("모션·3D를 쓸 수 없어도 같은 카피와 CTA가 그대로 남는다(정적 대체)", () => {

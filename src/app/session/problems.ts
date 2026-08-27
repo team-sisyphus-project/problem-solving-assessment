@@ -55,8 +55,15 @@ function hashToken(token: string): number {
   return hash;
 }
 
-/** 토큰에 배정된 문제 1건을 반환(같은 토큰 → 항상 같은 문제) */
-export function assignProblem(token: string): Problem {
-  const idx = hashToken(token) % PROBLEM_POOL.length;
+/**
+ * 토큰에 배정된 문제 1건을 반환한다.
+ *
+ * 같은 토큰·같은 회차면 항상 같은 문제다(M-2). 이전 제출을 두고 새로 시작하면
+ * 회차(attempt)가 올라가고, 그만큼 풀에서 다음 문제로 옮겨 간다 — 같은 문제를
+ * 다시 받으면 "새로 시작"이 아니라 재시도가 되어 버리기 때문이다. 풀을 한 바퀴
+ * 다 돌면 다시 처음으로 돌아온다(풀 크기만큼만 서로 다른 문제를 줄 수 있다).
+ */
+export function assignProblem(token: string, attempt = 0): Problem {
+  const idx = (hashToken(token) + attempt) % PROBLEM_POOL.length;
   return PROBLEM_POOL[idx];
 }

@@ -45,6 +45,28 @@ export interface Candidate {
   email: string;
 }
 
+/**
+ * 지난 제출 1건의 스냅샷 — 새로 시작해도 **지우지 않고** 여기에 쌓아 둔다.
+ *
+ * 제출은 되돌릴 수 없다고 지원자에게 약속했고, 담당자가 검토할 평가 자료이기도
+ * 하다. 그래서 "이전 제출을 무시하고 새 문제로 시작"은 기록을 덮어쓰는 게 아니라
+ * 옆으로 치워 두는 것이다 — 지원자는 언제든 다시 열어 볼 수 있다.
+ */
+export interface SubmittedAttempt {
+  /** 회차(1-based) — 첫 제출이 1 */
+  attempt: number;
+  /** 그때의 지원자 식별 정보 */
+  candidate: Candidate | null;
+  /** 그때 배정됐던 문제 */
+  problem: Problem;
+  /** 그때의 전체 대화 로그 */
+  messages: ChatMessage[];
+  /** 제출 시각(ISO) */
+  submittedAt: string;
+  /** 풀이 시작 시각(ISO). 없으면 null */
+  startedAt: string | null;
+}
+
 export interface InviteSession {
   /** 초대 토큰(스토리지 키) */
   token: string;
@@ -65,6 +87,10 @@ export interface InviteSession {
    * 가늠하기 위한 화면 표시일 뿐, 평가 기준이 아니다.
    */
   startedAt: string | null;
+  /** 현재 회차(0-based). 이전 제출을 두고 새로 시작할 때마다 1씩 오른다 */
+  attempt: number;
+  /** 제출을 마친 지난 회차들 — 새로 시작해도 지우지 않는다(오래된 것부터) */
+  history: SubmittedAttempt[];
 }
 
 /**
@@ -116,8 +142,14 @@ export function getSession(token: string): InviteSession | null {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as InviteSession;
-    // startedAt은 나중에 추가된 필드라, 이전에 저장된 세션에는 없을 수 있다.
-    return { ...parsed, startedAt: parsed.startedAt ?? null };
+    // startedAt·attempt·history는 나중에 추가된 필드라, 이전에 저장된 세션에는
+    // 없을 수 있다. 읽는 쪽이 매번 방어하지 않도록 여기서 기본값을 채운다.
+    return {
+      ...parsed,
+      startedAt: parsed.startedAt ?? null,
+      attempt: parsed.attempt ?? 0,
+      history: parsed.history ?? [],
+    };
   } catch {
     return null;
   }
@@ -144,9 +176,47 @@ export function getOrCreateSession(token: string): InviteSession {
     messages: [],
     submittedAt: null,
     startedAt: null,
+    attempt: 0,
+    history: [],
   };
   saveSession(created);
   return created;
+}
+
+/**
+ * 제출을 마친 뒤 **새 문제로 다시 시작**한다.
+ *
+ * 이전 제출은 지우지 않는다 — history로 옮겨 두고, 회차를 올려 다른 문제를
+ * 배정한 뒤 대화·시각만 비운다. 지원자 식별 정보는 같은 사람이므로 남긴다
+ * (본인 확인 단계에서 다시 확인받는다).
+ *
+ * 아직 제출하지 않은 세션에서는 아무것도 하지 않는다 — 진행 중인 대화를
+ * 실수로 날려 버리지 않기 위한 가드다.
+ */
+export function startNewAttempt(token: string): InviteSession {
+  const session = getOrCreateSession(token);
+  if (!session.submittedAt) return session;
+
+  const archived: SubmittedAttempt = {
+    attempt: session.attempt + 1,
+    candidate: session.candidate,
+    problem: session.problem,
+    messages: session.messages,
+    submittedAt: session.submittedAt,
+    startedAt: session.startedAt,
+  };
+  const nextAttempt = session.attempt + 1;
+  const next: InviteSession = {
+    ...session,
+    problem: assignProblem(token, nextAttempt),
+    messages: [],
+    submittedAt: null,
+    startedAt: null,
+    attempt: nextAttempt,
+    history: [...session.history, archived],
+  };
+  saveSession(next);
+  return next;
 }
 
 /**
