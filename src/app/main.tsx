@@ -29,7 +29,7 @@ import { router } from "./router";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
-  throw new Error("루트 엘리먼트(#root)를 찾을 수 없습니다.");
+  throw new Error("Root element (#root) was not found.");
 }
 
 createRoot(rootEl).render(

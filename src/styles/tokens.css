@@ -77,7 +77,8 @@
    * ======================================================================= */
 
   /* 글꼴 (font-family) */
-  --font-family-base: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* 영어 전용 제품이라 한글 우선 서체(Pretendard) 대신 시스템 산세리프 스택 */
+  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   /* 크기 (font-size) */
@@ -187,8 +188,9 @@
   --hero-sky-mid: #2f8ef2;
   --hero-sky-base: #cfe8fb;
 
-  /* 구름 — 흐릿하게 번지는 흰 덩어리 */
+  /* 구름 — 뭉게구름 윗면(밝은 흰색)과 밑면(옅은 회청색) */
   --hero-cloud: #ffffff;
+  --hero-cloud-shade: #dbe7f3;
 
   /* 언덕 — 원경에서 근경으로 갈수록 옅어지는 3겹 실루엣 */
   --hero-hill-far: #78bbec;
@@ -204,11 +206,15 @@
   --hero-object-attenuation: #cdeaff;
 
   /* 히어로 타이틀 크기 — text-size 스케일의 최대치(3xl=30px)보다 큰 표제 단계 */
-  --hero-title-size: 3.25rem;
+  --hero-title-size: 3.5rem;
   --hero-title-size-compact: 2.25rem;
 
-  /* 레이아웃 치수 — 오브젝트가 놓이는 무대와 언덕 띠의 높이 */
-  --hero-stage-min-height: 16rem;
-  --hero-hills-height: 22rem;
-  --hero-content-width: 44rem;
+  /* 하늘·오브젝트 위 카피가 묻히지 않게 하는 아주 옅은 그림자 */
+  --hero-text-shadow: 0 1px 16px rgba(11, 60, 120, 0.55);
+
+  /* CTA — 참고 영상의 입체 알약 버튼이 바닥에 드리우는 푸른 광채 */
+  --hero-cta-glow: rgba(37, 99, 235, 0.45);
+
+  /* 레이아웃 치수 — 히어로 카피 기둥의 읽기 폭 */
+  --hero-content-width: 40rem;
 }

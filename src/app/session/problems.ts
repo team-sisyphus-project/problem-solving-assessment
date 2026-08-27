@@ -1,5 +1,8 @@
 /*
  * 배정 문제 목업 조회 — 토큰 → 문제 1건(결정적 배정)
+ *
+ * NOTE(언어): 이 제품의 사용자 대면 언어는 영어 하나뿐이다(한국어 미지원).
+ * 목업 문제 텍스트도 지원자가 읽는 콘텐츠이므로 영어로만 둔다.
  * ---------------------------------------------------------------------------
  * 실제 서비스에서는 고객사가 등록한 문제 또는 플랫폼 기본 세트 중 서버가 배정한
  * 문제 1건을 토큰으로 조회한다(배정 로직 자체는 고객사 화면 스펙 소관). 이 골격
@@ -25,21 +28,21 @@ export interface Problem {
 export const PROBLEM_POOL: readonly Problem[] = [
   {
     id: "prob-onboarding-funnel",
-    title: "신규 사용자 온보딩 이탈 줄이기",
+    title: "Reduce drop-off in new-user onboarding",
     description:
-      "신규 가입 후 첫 주 이탈률이 높은 SaaS 제품이 있습니다. 데이터를 어떻게 확인하고, 어떤 가설을 세워 무엇부터 개선할지 단계적으로 제안하세요.",
+      "A SaaS product loses a large share of new users within their first week. Walk through how you would look at the data, what hypotheses you would form, and what you would try to fix first.",
   },
   {
     id: "prob-incident-postmortem",
-    title: "장애 사후 분석 설계",
+    title: "Design an incident postmortem",
     description:
-      "결제 API가 30분간 간헐적으로 실패한 장애가 있었습니다. 원인 규명과 재발 방지를 위한 사후 분석(포스트모템)을 어떤 순서로 진행할지 구성하세요.",
+      "A payments API failed intermittently for thirty minutes. Lay out how you would run the postmortem: finding the cause, and making sure it does not happen again.",
   },
   {
     id: "prob-pricing-experiment",
-    title: "가격 실험 설계",
+    title: "Design a pricing experiment",
     description:
-      "구독 요금제를 새로 도입하려 합니다. 매출을 해치지 않으면서 최적 가격대를 찾기 위한 실험을 어떻게 설계하고 성공 지표를 무엇으로 둘지 설명하세요.",
+      "A team is introducing subscription tiers for the first time. Describe the experiment you would run to find the right price without damaging revenue, and the metrics you would judge it by.",
   },
 ];
 

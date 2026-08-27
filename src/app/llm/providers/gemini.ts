@@ -52,7 +52,7 @@ export const geminiAdapter: ProviderAdapter = {
       .join("");
 
     if (!text) {
-      throw new LlmError("gemini", "Gemini 응답에 텍스트가 없습니다.");
+      throw new LlmError("gemini", "The Gemini response contained no text.");
     }
     return text;
   },

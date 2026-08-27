@@ -16,6 +16,25 @@
   gap: var(--space-xl);
 }
 
+/*
+ * 흐름 화면의 콘텐츠 카드 — 하늘 배경 위에 떠 있는 흰 표면.
+ * 셸 배경이 잔잔한 하늘 그림으로 바뀌면서, 콘텐츠가 배경에 직접 얹히면 읽기
+ * 기준면이 사라진다. 배정 문제 카드(.problem-brief)와 같은 표면·둥글기·
+ * 엘리베이션을 공유해 흐름 전체에서 "읽는 자리"가 같은 형태로 보이게 한다.
+ */
+.flow-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  max-width: var(--container-width-md);
+  padding: var(--space-xl);
+  background-color: var(--surface-base);
+  border: var(--border-width-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
 /* 액션 행 — 주요/보조 버튼을 나란히 */
 .flow-actions {
   display: flex;
@@ -31,6 +50,7 @@
   flex-direction: column;
   gap: var(--space-md);
   width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  align-self: center; /* 구조값 — 카드 안에서 가운데 */
   max-width: var(--container-width-sm); /* sizing: 가장 좁은 읽기 폭(집중 입력) */
 }
 
@@ -89,13 +109,20 @@
   color: var(--text-muted);
 }
 
-/* 제공자 선택 그룹(M-5) — GPT/Claude/Gemini 선택 자리 */
+/* 제공자 선택 그룹(M-5) — GPT/Claude/Gemini 선택 자리.
+   대화·작성창과 마찬가지로 흰 표면 위에 올려, 하늘 배경 위에서도 "고르는 자리"가
+   또렷하게 구분되게 한다(흐름 화면 카드와 같은 표면·둥글기·엘리베이션). */
 .provider-group {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-sm);
   width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  padding: var(--space-lg);
+  background-color: var(--surface-base);
+  border: var(--border-width-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .provider-group__legend {

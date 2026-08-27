@@ -13,9 +13,10 @@
  * 흐름 단계가 아니다. FLOW_STEPS에도, 단계 표시자에도 나타나지 않으며 셸
  * (AppShell) 밖에서 전면 히어로로 렌더된다. 기존 4단계 구조는 그대로다.
  *
- * 화면 구성(위 → 아래): 브랜드 마크 · eyebrow · 타이틀 · 서브카피 · 3D 오브젝트
- * 무대 · CTA. 오브젝트는 히어로 전면을 덮는 캔버스 위에 그려지되 무대(stage)
- * 중심에 정렬되어 카피·CTA와 겹치지 않는다(GlassAsterisk가 계산).
+ * 화면 구성은 참고 영상과 같은 **겹침** 구조다 — 하늘·구름 배경 위에 3D
+ * 오브젝트가 뜨고, 그 앞에 eyebrow → 타이틀 → 서브카피 → CTA가 가운데 정렬로
+ * 얹힌다. 오브젝트를 카피 옆이나 아래에 따로 두지 않기 때문에, 같은 크기라도
+ * 화면을 압도하지 않고 배경 오브제로 읽힌다.
  *
  * 모션·3D를 못 쓰는 환경(prefers-reduced-motion · WebGL 미지원 · 로드 실패)에서는
  * 같은 카피·레이아웃을 유지한 채 오브젝트만 정적 SVG로 대체된다(스펙 흐름 5).
@@ -26,13 +27,14 @@
  * ---------------------------------------------------------------------------
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { firstStepPath } from "../flow";
 import { strings } from "../i18n";
 import { isSubmitted } from "../session/store";
+import { BrandMark } from "../shell/BrandMark";
 import { GlassAsterisk } from "./welcome/GlassAsterisk";
-import { HeroScenery } from "./welcome/HeroScenery";
+import { SkyBackdrop } from "./welcome/SkyBackdrop";
 import { StaticAsterisk } from "./welcome/StaticAsterisk";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -59,7 +61,6 @@ export function WelcomeScreen() {
   const { token = "" } = useParams();
   const s = strings.screens.welcome;
 
-  const stageRef = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [webglUnavailable, setWebglUnavailable] = useState(false);
 
@@ -73,49 +74,38 @@ export function WelcomeScreen() {
 
   return (
     <div className="welcome">
-      {/* 하늘 바탕 — 3D 캔버스가 뜨지 않는 환경에서도 같은 그라디언트를 보장한다 */}
-      <div className="welcome__sky" aria-hidden="true" />
+      {/* 바탕 하늘 — 3D가 뜨면 그 위를 덮지만, 대체 경로에서는 이 그림이 남는다 */}
+      <SkyBackdrop variant="hero" className="welcome__sky" />
 
-      {!useStaticObject && (
-        <GlassAsterisk
-          stageRef={stageRef}
-          onUnavailable={() => setWebglUnavailable(true)}
-        />
+      {useStaticObject ? (
+        <div className="welcome__object" aria-hidden="true">
+          <StaticAsterisk />
+        </div>
+      ) : (
+        <GlassAsterisk onUnavailable={() => setWebglUnavailable(true)} />
       )}
 
-      <HeroScenery />
-
       <header className="welcome__brand">
-        <span className="welcome__product">{strings.app.productName}</span>
+        <BrandMark tone="on-sky" />
       </header>
 
       <main className="welcome__content">
-        <div className="welcome__copy">
-          <p className="welcome__eyebrow">{s.eyebrow}</p>
-          <h1 className="welcome__title">{s.title}</h1>
-          <p className="welcome__description">{s.description}</p>
-        </div>
+        {/* 오브젝트 위에 겹치는 카피 — 이 화면의 실제 초점 */}
+        <p className="welcome__eyebrow">{s.eyebrow}</p>
+        <h1 className="welcome__title">{s.title}</h1>
+        <p className="welcome__description">{s.description}</p>
 
-        {/* 오브젝트 무대 — 3D는 이 영역 중심에 정렬되고, 대체 시 SVG가 여기 놓인다 */}
-        <div
-          className="welcome__stage"
-          ref={stageRef}
-          role="img"
-          aria-label={s.visualLabel}
+        <button
+          type="button"
+          className="btn btn--hero"
+          onClick={() => navigate(firstStepPath(token))}
         >
-          {useStaticObject && <StaticAsterisk />}
-        </div>
-
-        <div className="welcome__actions">
-          <button
-            type="button"
-            className="btn welcome__cta"
-            onClick={() => navigate(firstStepPath(token))}
-          >
-            {s.primaryAction}
-          </button>
-        </div>
+          {s.primaryAction}
+        </button>
       </main>
+
+      {/* 장식 오브젝트의 접근성 이름 — 시각 요소를 스크린리더에도 한 줄로 알린다 */}
+      <span className="visually-hidden">{s.visualLabel}</span>
     </div>
   );
 }

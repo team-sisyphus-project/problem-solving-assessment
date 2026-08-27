@@ -146,9 +146,10 @@
 
 - **위치**: 화면 [`src/app/screens/WelcomeScreen.tsx`], 파츠 `src/app/screens/welcome/`,
   스타일 [`src/app/styles/welcome.css`](../src/app/styles/welcome.css)(로드 순서 6번 뒤 7번).
-- **클래스**: `.welcome` > `.welcome__sky` · `.welcome__canvas` · `.welcome__scenery`
-  (`__cloud` · `__hills`) · `.welcome__brand` · `.welcome__content`
-  (`__copy` · `__eyebrow` · `__title` · `__description` · `__stage` · `__actions` · `__cta`).
+- **클래스**: `.welcome` > `.welcome__sky` · `.welcome__canvas` · `.welcome__object` ·
+  `.welcome__brand` · `.welcome__content` (`__eyebrow` · `__title` · `__description`).
+  카피는 오브젝트 **위에 겹쳐** 가운데 정렬된다(참고 영상과 같은 구성) — 오브젝트를
+  옆이나 아래로 밀어내는 별도 무대를 두지 않는다.
 - **단계 표시자를 쓰지 않는다.** 인트로는 `FLOW_STEPS`에 없고 stepper에도 나타나지 않는다 —
   4단계 구조(`verify` → `brief` → `solve` → `complete`)는 그대로다. CTA의 목적지는
   `firstStepPath(token)`(= `/invite/:token/verify`)이고, 인트로 경로는 `welcomePath(token)`.
@@ -156,11 +157,32 @@
   크기·엘리베이션만 얹는다. 건너뛰기·뒤로가기 같은 다른 액션을 두지 않는다.
 - **모션 없는 경로를 항상 함께 만든다.** `prefers-reduced-motion: reduce` · WebGL 미지원 ·
   three 청크 로드 실패 어느 쪽이든 같은 카피·레이아웃에 정적 SVG 오브젝트로 대체된다.
+- **배경 그림은 페인터 한 벌**(`screens/welcome/skyPainter.ts`)이 그린다. WebGL 씬 배경과
+  DOM 캔버스(`SkyBackdrop`)가 같은 함수를 쓰므로 두 경로의 그림이 어긋나지 않는다.
+  CSS로 구름을 따로 그리지 않는다 — 유리가 굴절시키려면 배경이 씬 안에 있어야 한다.
+
+### 흐름 4단계도 같은 세계를 쓴다
+
+셸(`AppShell`)은 같은 페인터의 **잔잔한 변형**(`variant="calm"`)을 `.app-shell__backdrop`에
+깔고, 인트로와 같은 `BrandMark`를 헤더에 쓴다. 배경이 생긴 만큼 콘텐츠는 흰 카드 위에
+올린다 — 새 카드를 만들지 말고 아래를 재사용한다.
+
+| 자리 | 클래스 |
+|---|---|
+| 본인 확인 · 제출 완료 · 잠금 안내 | `.flow-panel` (empty-state/폼을 감싸는 흰 카드) |
+| 배정 문제 | `.problem-brief` |
+| 대화 · 작성창 · 제공자 선택 | `.conversation` · `.composer` · `.provider-group` |
+
+### 버튼
+
+`.btn`은 알약형(`--radius-full`)이다. 웰컴 인트로의 CTA만 `.btn--hero`로 입체(압출면 +
+광채 + 아주 느린 기울임)를 얹고, 흐름 4단계의 버튼은 같은 형태를 쓰되 움직이지 않는다
+(주요 초점은 화면당 하나 — 원칙 3). `.btn--hero`도 `prefers-reduced-motion`에서 멈춘다.
 
 #### 신규 토큰 후보 (`--hero-*`)
 
-하늘 그라디언트·구름·언덕·유리 틴트·표제 크기는 기존 토큰 체계(surface/text/border/
-accent/status, text-size 스케일)로 표현되지 않는다. `tokens.css` 맨 아래의 **"신규 토큰
+하늘 그라디언트·구름·능선·유리 틴트·표제 크기·CTA 광채는 기존 토큰 체계(surface/text/
+border/accent/status, text-size 스케일)로 표현되지 않는다. `tokens.css` 맨 아래의 **"신규 토큰
 후보"** 블록에 `--hero-*`로 격리해 두었다.
 
 - 후보라도 규칙 1은 그대로다 — 원시값은 `tokens.css`에만 두고, 화면·컴포넌트·three 씬은
@@ -175,7 +197,7 @@ accent/status, text-size 스케일)로 표현되지 않는다. `tokens.css` 맨 
 
 ---
 
-## 규칙 4 — i18n: 문구는 키를 통해서만
+## 규칙 4 — i18n: 문구는 키를 통해서만 (영어 전용)
 
 사용자 대면 문자열(라벨·버튼·안내·에러·placeholder)을 코드에 **리터럴로 직접 쓰지 않는다.**
 반드시 키를 참조한다. 규약 정본: `$GENOSIS_SPEC_PATH/foundations/i18n-strings.md`.
@@ -185,20 +207,22 @@ accent/status, text-size 스케일)로 표현되지 않는다. `tokens.css` 맨 
   배선 정본은 [`src/app/i18n/index.ts`](../src/app/i18n/index.ts).
 - **리터럴 금지**: 화면·셸·흐름에 한국어(또는 어떤 언어) 문장을 그대로 쓰지 않는다.
   같은 의미의 문구는 하나의 키로 통합한다(문구 산개 방지).
-- **defaultLocale = ko**: 기준이자 폴백 로케일은 `ko`. 사전 정본은
-  [`src/app/i18n/locales/ko.ts`](../src/app/i18n/locales/ko.ts). `ko`의 키 집합이
-  **정본(canonical) 키 세트**다.
-- **새 키는 ko 먼저**: 키의 신설/삭제는 **`ko`에서 먼저** 한다. 다른 로케일 파일은
-  `ko`와 **동일한 키 집합**을 번역으로 채운다(특정 로케일에만 있는 키 금지 — 폴백 불가 방지).
-  키 타입 `Strings`는 `ko` 구조에서 파생하므로 누락/오타는 컴파일 시점에 잡힌다.
+- **영어 전용 · defaultLocale = en**: 이 제품은 **한국어를 지원하지 않는다.** 사용자 대면
+  문자열은 전부 영어이며, 사전 정본은 [`src/app/i18n/locales/en.ts`](../src/app/i18n/locales/en.ts).
+  `en`의 키 집합이 **정본(canonical) 키 세트**다. 코드 주석만 팀 내부 문서로서 한국어를 쓴다.
+- **사전 밖 콘텐츠도 영어**: 목업 문제 데이터처럼 i18n 사전에 없는 도메인 텍스트도 영어로 둔다.
+  회귀는 `test/candidate-exam/english-only.test.ts`가 막는다(사전·문제 풀에 한글이 섞이면 실패).
+- **새 키는 en 먼저**: 키의 신설/삭제는 **`en`에서 먼저** 한다. 로케일을 추가하게 되면
+  `en`과 **동일한 키 집합**을 번역으로 채운다(특정 로케일에만 있는 키 금지 — 폴백 불가 방지).
+  키 타입 `Strings`는 `en` 구조에서 파생하므로 누락/오타는 컴파일 시점에 잡힌다.
 - **네임스페이스 어휘**: `app`(제품/셸 공통) · `nav`(단계 표시자 접근성 라벨) ·
-  `screens.<screen>`(화면 전용 — `start`/`connect`/`solve`/`complete`) ·
+  `screens.<screen>`(화면 전용 — `welcome`/`verify`/`brief`/`solve`/`complete`) ·
   `providers`(제공자 표시명) · `fallback`(시스템 안내). 화면 문구 역할 접미사는
   `title`/`description`/`primaryAction`/`backAction`/`placeholder`/`hint`/`stepLabel` 등.
   키 이름에 실제 표시 문장을 넣지 않는다(값과 이름 분리).
 - **새 화면 추가 시**: `screens.<newScreen>` 네임스페이스를 `ko`에 신설하고, 화면 간
   공통 문구는 `app`으로 올린다. 문구 톤은 `DESIGN.md`/`foundations/design-principles.md`의
-  "신뢰감 있고 정돈된" B2B 채용 톤을 재사용한다.
+  "신뢰감 있고 정돈된" B2B 채용 톤을 영어로 재사용한다 — 차분하고 명확하게, 과장 없이.
 
 ---
 

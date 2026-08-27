@@ -4,10 +4,13 @@
  * Spec: 웰컴 인트로 — 임팩트 3D 버전(A안)
  *
  * 확정된 모션 에셋(캡슐 3개를 60°씩 돌려 만든 6갈래 별 + MeshPhysicalMaterial
- * 투과 유리)을 이 화면에 이식한 것이다. 데모 에셋과 달리 하늘 그라디언트를
- * **씬 배경**으로 넣어 유리가 하늘을 굴절시키게 한다 — 투명 캔버스로 두면 굴절할
- * 대상이 없어 오브젝트가 거의 사라지기 때문이다. 캔버스가 히어로 전면을 덮으므로
- * CSS 하늘(.welcome__sky)과 이음매가 생기지 않는다.
+ * 투과 유리)을 이 화면에 이식한 것이다. 참고 영상과 같은 인상을 내려면 배경이
+ * 씬 **안**에 있어야 한다 — 유리가 하늘과 구름을 굴절시켜야 하기 때문이다.
+ * 그래서 `skyPainter`의 페인터로 그린 캔버스를 `scene.background`에 물리고,
+ * 화면 비율이 바뀌면 다시 그린다.
+ *
+ * 오브젝트는 카피 **뒤**에 놓인다(참고 영상과 같은 겹침 구성). 크기는 뷰포트
+ * 비율로 정해 어느 화면에서도 카피를 삼키지 않을 만큼만 차지한다.
  *
  * 이 스펙이 전제로 못박은 "신규 라이브러리 도입"의 실체가 three다. 초기 번들에
  * 얹지 않으려고 동적 import로 필요한 순간에만 불러온다 — 흐름 4단계 화면은
@@ -24,7 +27,8 @@
  * ---------------------------------------------------------------------------
  */
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef } from "react";
+import { paintSky, readSkyPalette } from "./skyPainter";
 
 /** 등장 모션 길이(ms) — 떠오르며 자리 잡는 1회성 인트로 */
 const INTRO_DURATION = 1200;
@@ -32,23 +36,26 @@ const INTRO_DURATION = 1200;
 /** 오브젝트의 외접 지름(월드 단위) — 캡슐 길이 3.4 + 양끝 반지름 0.44*2 */
 const OBJECT_DIAMETER = 4.28;
 
-/** 무대 대비 오브젝트가 차지할 비율 · 스케일 상·하한(구현 설정값) */
-const STAGE_FILL = 0.92;
-const SCALE_MIN = 0.35;
-const SCALE_MAX = 1.4;
+/**
+ * 화면 대비 오브젝트 크기 — 세로/가로 중 더 빡빡한 쪽에 맞춘다. 참고 영상의
+ * 비율(히어로 높이의 절반 남짓)을 따르되, 카피를 덮어 읽기 어려워지지 않도록
+ * 한 단계 작게 잡았다.
+ */
+const SIZE_BY_HEIGHT = 0.46;
+const SIZE_BY_WIDTH = 0.72;
+
+/** 오브젝트 중심의 세로 위치(화면 높이 대비) — 정중앙보다 살짝 위 */
+const CENTER_Y = 0.48;
+
+/** 배경 텍스처 해상도(가로 고정, 세로는 화면 비율로) — 구현 설정값 */
+const SKY_TEXTURE_WIDTH = 768;
 
 interface GlassAsteriskProps {
-  /**
-   * 오브젝트가 놓일 무대 요소. 캔버스는 히어로 전면을 덮지만 오브젝트는 캔버스
-   * 정중앙이 아니라 이 요소의 중심에 맞춰 띄운다 — 위쪽 카피·아래쪽 CTA와
-   * 겹치지 않게 하려는 정렬이다.
-   */
-  stageRef: RefObject<HTMLElement>;
   /** WebGL·토큰을 쓸 수 없어 정적 대체로 내려가야 할 때 알린다 */
   onUnavailable: () => void;
 }
 
-export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
+export function GlassAsterisk({ onUnavailable }: GlassAsteriskProps) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   // onUnavailable은 렌더마다 새 함수일 수 있으므로 ref로 고정한다 — 의존성에
@@ -73,15 +80,13 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
 
         // ── 토큰 주입 ────────────────────────────────────────────────────
         // 색은 전부 tokens.css에서 읽는다. 비어 있으면 예외 → 정적 대체.
+        const palette = readSkyPalette();
         const rootStyle = getComputedStyle(document.documentElement);
         const token = (name: string): string => {
           const value = rootStyle.getPropertyValue(name).trim();
-          if (!value) throw new Error(`웰컴 히어로 토큰 누락: ${name}`);
+          if (!value) throw new Error(`Missing hero token: ${name}`);
           return value;
         };
-        const skyTop = token("--hero-sky-top");
-        const skyMid = token("--hero-sky-mid");
-        const skyBase = token("--hero-sky-base");
         const objectTint = token("--hero-object-tint");
         const objectAttenuation = token("--hero-object-attenuation");
 
@@ -105,21 +110,24 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
         scene.environment = environment.texture;
 
         // ── 하늘 배경(굴절 대상) ─────────────────────────────────────────
-        // CSS의 .welcome__sky와 같은 3단 그라디언트를 씬 배경으로 깐다.
+        // DOM의 SkyBackdrop과 같은 페인터로 그려 두 경로의 그림이 어긋나지 않는다.
         const skyCanvas = document.createElement("canvas");
-        skyCanvas.width = 16;
-        skyCanvas.height = 512;
-        const ctx = skyCanvas.getContext("2d");
-        if (!ctx) throw new Error("하늘 그라디언트 캔버스를 만들 수 없습니다.");
-        const gradient = ctx.createLinearGradient(0, 0, 0, skyCanvas.height);
-        gradient.addColorStop(0, skyTop);
-        gradient.addColorStop(0.45, skyMid);
-        gradient.addColorStop(1, skyBase);
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+        const skyContext = skyCanvas.getContext("2d");
+        if (!skyContext) {
+          throw new Error("Could not create the sky backdrop canvas.");
+        }
         const skyTexture = new THREE.CanvasTexture(skyCanvas);
         skyTexture.colorSpace = THREE.SRGBColorSpace;
         scene.background = skyTexture;
+
+        function paintBackdrop(aspect: number) {
+          const width = SKY_TEXTURE_WIDTH;
+          const height = Math.max(1, Math.round(width / aspect));
+          skyCanvas.width = width;
+          skyCanvas.height = height;
+          paintSky(skyContext!, width, height, palette, "hero");
+          skyTexture.needsUpdate = true;
+        }
 
         // ── 유리 재질 + 6갈래 별 ────────────────────────────────────────
         const material = new THREE.MeshPhysicalMaterial({
@@ -158,7 +166,7 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
         const ambient = new THREE.AmbientLight(0xffffff, 0.35);
         scene.add(ambient);
 
-        // ── 레이아웃 — 캔버스 크기 · 무대 정렬 · 반응형 스케일 ──────────
+        // ── 레이아웃 — 캔버스 크기 · 세로 위치 · 반응형 스케일 ───────────
         let baseY = 0;
         let baseScale = 1;
 
@@ -171,38 +179,23 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
           renderer.setSize(width, height, false);
           camera.aspect = width / height;
           camera.updateProjectionMatrix();
+          paintBackdrop(camera.aspect);
 
           // 카메라 거리에서 화면에 보이는 월드 높이 → 픽셀↔월드 환산 계수
           const visibleHeight =
             2 * Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
           const unitsPerPixel = visibleHeight / height;
 
-          const stage = stageRef.current;
-          if (stage) {
-            const hostRect = host!.getBoundingClientRect();
-            const stageRect = stage.getBoundingClientRect();
-            // 무대 중심이 캔버스 중심에서 얼마나 아래인가(px) → 월드 y는 반대 부호
-            const deltaPx =
-              stageRect.top +
-              stageRect.height / 2 -
-              (hostRect.top + hostRect.height / 2);
-            baseY = -deltaPx * unitsPerPixel;
+          const targetPx = Math.min(
+            height * SIZE_BY_HEIGHT,
+            width * SIZE_BY_WIDTH,
+          );
+          baseScale = (targetPx * unitsPerPixel) / OBJECT_DIAMETER;
 
-            const targetPx =
-              Math.min(stageRect.width, stageRect.height) * STAGE_FILL;
-            const fitted = (targetPx * unitsPerPixel) / OBJECT_DIAMETER;
-            baseScale = Math.min(SCALE_MAX, Math.max(SCALE_MIN, fitted));
-          }
+          // 화면 정중앙(0.5) 대비 CENTER_Y만큼 위로 — 픽셀 차이를 월드로 환산
+          baseY = (0.5 - CENTER_Y) * height * unitsPerPixel;
           return true;
         }
-
-        // 크기가 잡힌 뒤에만 그린다 — ResizeObserver가 최초 관측에서도 한 번
-        // 호출되므로, 마운트 시점에 레이아웃이 아직 0이어도 곧 따라잡는다.
-        const resizeObserver = new ResizeObserver(() => {
-          if (layout()) draw();
-        });
-        resizeObserver.observe(host);
-        if (stageRef.current) resizeObserver.observe(stageRef.current);
 
         // ── 루프 ────────────────────────────────────────────────────────
         // 등장 모션(떠오르며 자리 잡기) 뒤 승인 에셋의 느린 상시 회전으로 이어진다.
@@ -212,8 +205,7 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
         /*
          * 등장 모션은 "보고 있는 사람"을 위한 것이다. 백그라운드 탭에서 열리면
          * rAF가 멈춰 있어 인트로 첫 자세(작고 낮은 상태)로 굳은 화면이 남으므로,
-         * 그런 경우엔 등장 모션을 건너뛰고 처음부터 정지 자세로 그린다 — 탭을
-         * 열었을 때 튀지 않고 자리 잡은 오브젝트가 보인다.
+         * 그런 경우엔 등장 모션을 건너뛰고 처음부터 정지 자세로 그린다.
          */
         const playIntro = !document.hidden;
 
@@ -236,21 +228,27 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
           renderer.render(scene, camera);
         }
 
+        // 크기가 잡힌 뒤에만 그린다 — ResizeObserver가 최초 관측에서도 한 번
+        // 호출되므로, 마운트 시점에 레이아웃이 아직 0이어도 곧 따라잡는다.
+        const resizeObserver = new ResizeObserver(() => {
+          if (layout()) draw();
+        });
+        resizeObserver.observe(host);
+
+        if (layout()) draw();
+
+        // 탭이 다시 보이면(그동안 rAF가 멈춰 있었다면) 한 프레임을 즉시 갱신한다.
+        const onVisibility = () => {
+          if (!document.hidden && layout()) draw();
+        };
+        document.addEventListener("visibilitychange", onVisibility);
+
         function animate() {
           frame = requestAnimationFrame(animate);
           // 탭이 가려지면 그리지 않는다(배터리·GPU 절약).
           if (document.hidden) return;
           draw();
         }
-
-        // 첫 프레임은 rAF를 기다리지 않고 즉시 그린다 — 백그라운드 탭에서 열린
-        // 경우 rAF가 한동안 돌지 않아 캔버스가 빈 채로 남기 때문이다.
-        if (layout()) draw();
-        // 탭이 다시 보이면(그동안 rAF가 멈춰 있었다면) 한 프레임을 즉시 갱신한다.
-        const onVisibility = () => {
-          if (!document.hidden && layout()) draw();
-        };
-        document.addEventListener("visibilitychange", onVisibility);
         animate();
 
         teardown = () => {
@@ -275,7 +273,7 @@ export function GlassAsterisk({ stageRef, onUnavailable }: GlassAsteriskProps) {
       disposed = true;
       teardown?.();
     };
-  }, [stageRef]);
+  }, []);
 
   return <div className="welcome__canvas" ref={hostRef} aria-hidden="true" />;
 }

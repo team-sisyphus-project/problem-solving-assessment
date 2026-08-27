@@ -16,9 +16,11 @@ export function CompleteScreen() {
 
   return (
     <div className="flow-screen">
-      <div className="empty-state">
-        <h1 className="empty-state__title">{s.title}</h1>
-        <p className="empty-state__description">{s.description}</p>
+      <div className="flow-panel">
+        <div className="empty-state">
+          <h1 className="empty-state__title">{s.title}</h1>
+          <p className="empty-state__description">{s.description}</p>
+        </div>
       </div>
       <div className="flow-actions">
         <button

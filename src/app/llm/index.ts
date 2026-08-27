@@ -38,10 +38,10 @@ export async function sendChat(
     );
   }
   if (!apiKey || apiKey.trim().length === 0) {
-    throw new LlmError(provider, "API 키가 필요합니다.");
+    throw new LlmError(provider, "An API key is required.");
   }
   if (messages.length === 0) {
-    throw new LlmError(provider, "보낼 메시지가 없습니다.");
+    throw new LlmError(provider, "There is no message to send.");
   }
 
   return adapterRegistry[provider].send(apiKey, messages);

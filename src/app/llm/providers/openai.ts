@@ -33,7 +33,7 @@ export const openaiAdapter: ProviderAdapter = {
 
     const text = data.choices?.[0]?.message?.content;
     if (!text) {
-      throw new LlmError("gpt", "GPT 응답에 텍스트가 없습니다.");
+      throw new LlmError("gpt", "The GPT response contained no text.");
     }
     return text;
   },

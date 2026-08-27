@@ -48,7 +48,7 @@ export const anthropicAdapter: ProviderAdapter = {
     );
 
     if (data.stop_reason === "refusal") {
-      throw new LlmError("claude", "Claude가 이 요청에 응답을 거부했습니다.");
+      throw new LlmError("claude", "Claude declined to answer this request.");
     }
 
     const text = (data.content ?? [])
@@ -57,7 +57,7 @@ export const anthropicAdapter: ProviderAdapter = {
       .join("");
 
     if (!text) {
-      throw new LlmError("claude", "Claude 응답에 텍스트가 없습니다.");
+      throw new LlmError("claude", "The Claude response contained no text.");
     }
     return text;
   },

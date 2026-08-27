@@ -4,18 +4,18 @@
  * Spec: 웰컴 인트로 — 임팩트 3D 버전
  *
  * 흐름 4단계 화면과 달리 셸(app-shell) 밖에서 전면(full-bleed)으로 깔린다.
- * 레이어는 아래에서 위로 4겹이며, 카피·CTA가 항상 최상단에 온다.
+ * 참고 영상과 같은 **겹침** 구성이라 레이어가 위로 쌓이며, 카피가 항상 맨 위다.
  *
- *   0. .welcome__sky      — CSS 하늘 그라디언트(3D가 없어도 보장되는 바탕)
- *   0. .welcome__canvas   — WebGL 캔버스(같은 하늘을 다시 그려 유리가 굴절시킴)
- *   1. .welcome__scenery  — 구름 · 언덕 일러스트(장식, 포인터 이벤트 없음)
- *   2. .welcome__brand / .welcome__content — 브랜드 마크 · 카피 · 무대 · CTA
+ *   0. .welcome__sky      — 하늘·구름·능선을 그린 2D 캔버스(대체 경로의 배경)
+ *   0. .welcome__canvas   — WebGL 캔버스(같은 그림을 씬 배경으로 다시 그려 굴절)
+ *   1. .welcome__object   — 3D 대신 쓰이는 정적 SVG 오브젝트
+ *   2. .welcome__brand / .welcome__content — 브랜드 마크 · 카피 · CTA
  *
  * 색·간격·서체·둥글기는 tokens.css의 var(--token)만 참조한다(하드코딩 0).
  * 하늘 위 텍스트는 무채색 --text-* 대신 --hero-text-* 후보 토큰을 쓴다 — 짙은
  * 하늘에서 --text-strong(#111827)은 대비가 나오지 않기 때문이다.
  *
- * display·position·z-index·overflow·filter·백분율/vmin 기반 배치처럼 "값을 바꿔도
+ * display·position·z-index·overflow·백분율/vmin 기반 배치처럼 "값을 바꿔도
  * 사용자가 색·간격으로 인지하지 못하는" 구조·구현 설정값만 리터럴이다
  * (ui-conventions 규칙 1의 명시적 예외).
  * ---------------------------------------------------------------------------
@@ -27,7 +27,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh; /* 구조값 */
-  overflow: hidden; /* 구조값 — 구름/언덕이 화면 밖으로 넘치지 않게 */
+  overflow: hidden; /* 구조값 */
   isolation: isolate; /* 구조값 — z-index 스택을 이 안으로 가둔다 */
   font-family: var(--font-family-base);
   color: var(--hero-text-strong);
@@ -40,25 +40,16 @@
   }
 }
 
-/* ── 레이어 0 — 하늘 ─────────────────────────────────────────────────── */
+/* ── 레이어 0 — 하늘(2D 바탕 + WebGL) ────────────────────────────────── */
 
-.welcome__sky {
-  position: absolute; /* 구조값 */
-  inset: 0; /* 구조값 */
-  z-index: 0; /* 구현 설정값 */
-  background-image: linear-gradient(
-    180deg,
-    var(--hero-sky-top) 0%,
-    var(--hero-sky-mid) 45%,
-    var(--hero-sky-base) 100%
-  );
-}
-
-/* WebGL 캔버스 자리 — 하늘 바로 위(DOM 순서상 뒤)라 같은 z에서도 위에 온다 */
+.welcome__sky,
 .welcome__canvas {
   position: absolute; /* 구조값 */
   inset: 0; /* 구조값 */
   z-index: 0; /* 구현 설정값 */
+  display: block; /* 구조값 */
+  width: 100%; /* 구조값 */
+  height: 100%; /* 구조값 */
 }
 
 .welcome__canvas canvas {
@@ -67,67 +58,30 @@
   height: 100%; /* 구조값 */
 }
 
-/* ── 레이어 1 — 구름 · 언덕 ──────────────────────────────────────────── */
+/* ── 레이어 1 — 정적 대체 오브젝트 ───────────────────────────────────── */
 
-.welcome__scenery {
+/*
+ * 3D와 같은 자리·같은 비율. GlassAsterisk의 SIZE_BY_HEIGHT/SIZE_BY_WIDTH와
+ * CENTER_Y를 CSS로 옮긴 것이라, 대체로 내려가도 화면 인상이 바뀌지 않는다.
+ */
+.welcome__object {
   position: absolute; /* 구조값 */
-  inset: 0; /* 구조값 */
+  top: 48%; /* 구조값 — 3D의 CENTER_Y와 같은 위치 */
+  left: 50%; /* 구조값 */
   z-index: 1; /* 구현 설정값 */
+  width: min(46vh, 72vw); /* 구조값 — 3D의 크기 규칙과 동일 */
+  height: min(46vh, 72vw); /* 구조값 */
+  transform: translate(-50%, -50%); /* 구조값 */
   pointer-events: none; /* 구조값 — 장식은 입력을 가로채지 않는다 */
 }
 
-/*
- * 구름 — 흐릿하게 번지는 흰 덩어리. 크기·위치는 vmin/백분율 기반 배치값이라
- * 간격 스케일의 대상이 아니다. 화면 중앙(오브젝트 자리)을 비우고 좌우
- * 가장자리에만 둔다 — 캔버스 위 레이어라 중앙에 두면 오브젝트를 가린다.
- */
-.welcome__cloud {
-  position: absolute; /* 구조값 */
-  border-radius: var(--radius-full);
-  background-image: radial-gradient(
-    closest-side,
-    var(--hero-cloud) 0%,
-    transparent 100%
-  );
-  filter: blur(6px); /* 구현 설정값 — 가장자리를 부드럽게 */
-}
-
-.welcome__cloud--a {
-  top: 8%;
-  left: -10%;
-  width: 42vmin; /* 구조값 */
-  height: 20vmin; /* 구조값 */
-  opacity: 0.34; /* 구현 설정값 */
-}
-
-.welcome__cloud--b {
-  top: 38%;
-  right: -12%;
-  width: 38vmin; /* 구조값 */
-  height: 17vmin; /* 구조값 */
-  opacity: 0.28; /* 구현 설정값 */
-}
-
-.welcome__cloud--c {
-  top: 20%;
-  right: 12%;
-  width: 22vmin; /* 구조값 */
-  height: 10vmin; /* 구조값 */
-  opacity: 0.22; /* 구현 설정값 */
-}
-
-/* 언덕 — 화면 바닥에 붙는 3겹 실루엣 띠 */
-.welcome__hills {
-  position: absolute; /* 구조값 */
-  right: 0; /* 구조값 */
-  bottom: 0; /* 구조값 */
-  left: 0; /* 구조값 */
+.welcome__object svg {
   display: block; /* 구조값 */
   width: 100%; /* 구조값 */
-  height: var(--hero-hills-height);
+  height: 100%; /* 구조값 */
 }
 
-/* ── 레이어 2 — 브랜드 · 카피 · 무대 · CTA ───────────────────────────── */
+/* ── 레이어 2 — 브랜드 마크 · 카피 · CTA ─────────────────────────────── */
 
 /* 상단 브랜드 마크 — 마케팅 내비 없이 제품 식별만(응시 화면 성격) */
 .welcome__brand {
@@ -136,44 +90,38 @@
   padding: var(--space-lg) var(--space-xl);
 }
 
-.welcome__product {
-  font-size: var(--text-size-lg);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
-  color: var(--hero-text-strong);
-}
-
-/* 본문 기둥 — 카피(위) · 오브젝트 무대(가운데, 신축) · CTA(아래) */
+/*
+ * 카피 기둥 — 오브젝트 **위**에 겹쳐 세로 가운데 정렬된다. 오브젝트를 옆이나
+ * 아래로 밀어내지 않기 때문에, 같은 크기라도 화면을 압도하지 않고 배경 오브제로
+ * 읽힌다(참고 영상과 같은 구성).
+ */
 .welcome__content {
   position: relative; /* 구조값 */
   z-index: 2; /* 구현 설정값 */
-  flex: 1 1 auto; /* 구조값 — 남는 높이를 무대가 흡수 */
+  flex: 1 1 auto; /* 구조값 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xl);
-  padding: var(--space-lg) var(--space-xl) var(--space-3xl);
-  text-align: center; /* 구조값 */
-}
-
-/* 카피 묶음 — eyebrow → 타이틀 → 서브카피의 세로 위계(원칙 3) */
-.welcome__copy {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
+  box-sizing: border-box; /* 구조값 — 좌우 padding이 폭을 넘치지 않게 */
   width: 100%; /* 구조값 */
   max-width: var(--hero-content-width);
+  margin-left: auto; /* 구조값 — 가운데 정렬 */
+  margin-right: auto; /* 구조값 */
+  padding: 0 var(--space-xl) var(--space-3xl);
+  text-align: center; /* 구조값 */
 }
 
 .welcome__eyebrow {
   margin: 0;
-  font-size: var(--text-size-sm);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-size-md);
+  font-weight: var(--font-weight-regular);
+  font-style: italic; /* 구조값 — 참고 영상의 세리프 느낌 eyebrow */
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-wide);
-  color: var(--hero-text-soft);
+  color: var(--hero-text-strong);
+  text-shadow: var(--hero-text-shadow);
 }
 
 .welcome__title {
@@ -183,46 +131,23 @@
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-tight);
   color: var(--hero-text-strong);
+  text-shadow: var(--hero-text-shadow);
 }
 
 .welcome__description {
   margin: 0;
+  /* 서브카피는 타이틀 바로 아래에 붙되 한 단계 떨어뜨린다 */
+  margin-top: var(--space-2xs);
   font-size: var(--text-size-lg);
   line-height: var(--line-height-relaxed);
   color: var(--hero-text-soft);
+  /* 유리 오브젝트 위에 겹쳐 놓이므로, 밝은 부분에서도 글자가 묻히지 않게 */
+  text-shadow: var(--hero-text-shadow);
 }
 
-/*
- * 오브젝트 무대 — 3D 오브젝트가 정렬되는 기준 영역이자, 정적 대체 시 SVG가
- * 놓이는 자리. 비어 있어도 높이를 차지해야 카피와 CTA가 오브젝트를 피해 간다.
- */
-.welcome__stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1 1 auto; /* 구조값 — 남는 세로 공간을 차지 */
-  width: 100%; /* 구조값 */
-  min-height: var(--hero-stage-min-height);
-}
-
-/* 정적 대체 오브젝트 — 무대 안에 정사각으로 들어맞게 */
-.welcome__static-object {
-  width: auto; /* 구조값 */
-  height: 100%; /* 구조값 */
-  max-width: 100%; /* 구조값 */
-  aspect-ratio: 1 / 1; /* 구현 설정값 */
-}
-
-.welcome__actions {
-  display: flex;
-  justify-content: center;
-}
-
-/* 단일 CTA — 화면의 유일한 주요 행동(원칙 3). 하늘 위라 엘리베이션을 더한다 */
-.welcome__cta {
-  padding: var(--space-sm) var(--space-xl);
-  font-size: var(--text-size-lg);
-  box-shadow: var(--shadow-lg);
+/* CTA는 카피 묶음에서 한 단계 더 떨어뜨려 행동으로 구분한다 */
+.welcome__content .btn--hero {
+  margin-top: var(--space-xl);
 }
 
 /* ── 좁은 화면 — 표제 단계와 여백을 한 단계씩 낮춘다 ─────────────────── */
@@ -233,8 +158,7 @@
   }
 
   .welcome__content {
-    gap: var(--space-lg);
-    padding: var(--space-md) var(--space-lg) var(--space-2xl);
+    padding: 0 var(--space-lg) var(--space-2xl);
   }
 
   .welcome__title {

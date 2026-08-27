@@ -114,7 +114,8 @@ describe("웰컴 인트로 (흐름 4단계 앞단)", () => {
     // jsdom에는 WebGL이 없어 GlassAsterisk가 정적 대체로 내려간 상태다.
     renderAt(welcomePath(TOKEN));
 
-    expect(screen.getByRole("img", { name: welcome.visualLabel })).toBeInTheDocument();
+    // 오브젝트 자체는 장식(aria-hidden)이고, 대체 텍스트만 스크린리더에 남는다.
+    expect(screen.getByText(welcome.visualLabel)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: welcome.title }),
     ).toBeInTheDocument();

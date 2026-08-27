@@ -73,70 +73,72 @@ export function VerifyScreen() {
 
   return (
     <div className="flow-screen">
-      <div className="empty-state">
-        <h1 className="empty-state__title">{s.title}</h1>
-        <p className="empty-state__description">{s.description}</p>
+      <div className="flow-panel">
+        <div className="empty-state">
+          <h1 className="empty-state__title">{s.title}</h1>
+          <p className="empty-state__description">{s.description}</p>
+        </div>
+
+        <form className="verify-form" noValidate onSubmit={handleSubmit}>
+          <div className="input-field">
+            <label className="input-field__label" htmlFor="verify-name">
+              {s.nameLabel}
+            </label>
+            <input
+              id="verify-name"
+              className={errors.name ? "input input--error" : "input"}
+              type="text"
+              autoComplete="name"
+              placeholder={s.namePlaceholder}
+              value={name}
+              aria-invalid={errors.name ? true : undefined}
+              aria-describedby={errors.name ? nameErrorId : undefined}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+              }}
+            />
+            {errors.name && (
+              <p id={nameErrorId} className="input-field__error" role="alert">
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div className="input-field">
+            <label className="input-field__label" htmlFor="verify-email">
+              {s.emailLabel}
+            </label>
+            <input
+              id="verify-email"
+              className={errors.email ? "input input--error" : "input"}
+              type="email"
+              autoComplete="email"
+              placeholder={s.emailPlaceholder}
+              value={email}
+              aria-invalid={errors.email ? true : undefined}
+              aria-describedby={errors.email ? emailErrorId : undefined}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+              }}
+            />
+            {errors.email ? (
+              <p id={emailErrorId} className="input-field__error" role="alert">
+                {errors.email}
+              </p>
+            ) : (
+              <p className="input-field__helper">{s.formHint}</p>
+            )}
+          </div>
+
+          <div className="flow-actions">
+            <button type="submit" className="btn">
+              {s.primaryAction}
+            </button>
+          </div>
+        </form>
       </div>
-
-      <form className="verify-form" noValidate onSubmit={handleSubmit}>
-        <div className="input-field">
-          <label className="input-field__label" htmlFor="verify-name">
-            {s.nameLabel}
-          </label>
-          <input
-            id="verify-name"
-            className={errors.name ? "input input--error" : "input"}
-            type="text"
-            autoComplete="name"
-            placeholder={s.namePlaceholder}
-            value={name}
-            aria-invalid={errors.name ? true : undefined}
-            aria-describedby={errors.name ? nameErrorId : undefined}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
-            }}
-          />
-          {errors.name && (
-            <p id={nameErrorId} className="input-field__error" role="alert">
-              {errors.name}
-            </p>
-          )}
-        </div>
-
-        <div className="input-field">
-          <label className="input-field__label" htmlFor="verify-email">
-            {s.emailLabel}
-          </label>
-          <input
-            id="verify-email"
-            className={errors.email ? "input input--error" : "input"}
-            type="email"
-            autoComplete="email"
-            placeholder={s.emailPlaceholder}
-            value={email}
-            aria-invalid={errors.email ? true : undefined}
-            aria-describedby={errors.email ? emailErrorId : undefined}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
-            }}
-          />
-          {errors.email ? (
-            <p id={emailErrorId} className="input-field__error" role="alert">
-              {errors.email}
-            </p>
-          ) : (
-            <p className="input-field__helper">{s.formHint}</p>
-          )}
-        </div>
-
-        <div className="flow-actions">
-          <button type="submit" className="btn">
-            {s.primaryAction}
-          </button>
-        </div>
-      </form>
     </div>
   );
 }
