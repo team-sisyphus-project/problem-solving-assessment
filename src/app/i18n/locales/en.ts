@@ -94,7 +94,7 @@ export const en = {
       consentReview:
         "During this assessment, the hiring team reviews not only your final result but the problem-solving process itself — the messages you exchange and the work you produce along the way.",
       consentNoTraining:
-        "This data is used only to review your submission. It is never used to train AI (LLM) models or for any other purpose.",
+        "This data is used only to review your submission — never to train AI (LLM) models, and never for any other purpose.",
       consentCheckboxLabel:
         "I understand and agree to how my assessment data is reviewed.",
       /** 미동의 상태로 진행을 시도할 때의 안내(페르소나 C — 왜 막혔는지 알린다) */
