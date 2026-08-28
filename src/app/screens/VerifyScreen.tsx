@@ -28,7 +28,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath } from "../flow";
 import { strings } from "../i18n";
-import { setCandidate } from "../session/store";
+import { recordConsent, setCandidate } from "../session/store";
 import { ProblemScan } from "./verify/ProblemScan";
 
 /** 최소 이메일 형식 검증(로컬) — 실제 인증은 범위 밖 */
@@ -77,6 +77,9 @@ export function VerifyScreen() {
 
     // 본인 확인·동의 완료 — 신원을 세션에 저장하고 문제 안내로 전진(회원가입 없음).
     setCandidate(token, { name: name.trim(), email: email.trim() });
+    // 게이트 통과 지점에서 동의 여부·시각을 기록한다(멱등, S-3/M-4). 백엔드
+    // 부재로 저장은 localStorage 계층에 머문다(마스터플랜 항목1 의존).
+    recordConsent(token);
     navigate(nextStepPath(token, "verify")!);
   }
 
