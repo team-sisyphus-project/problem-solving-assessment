@@ -28,7 +28,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { nextStepPath } from "../flow";
 import { strings } from "../i18n";
-import { setCandidate } from "../session/store";
+import { recordConsent, setCandidate } from "../session/store";
 import { ProblemScan } from "./verify/ProblemScan";
 
 /** 최소 이메일 형식 검증(로컬) — 실제 인증은 범위 밖 */
@@ -47,6 +47,9 @@ export function VerifyScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  // 데이터 열람 동의(S-1) — 명시적 체크 없이는 다음 단계로 넘어갈 수 없다.
+  const [consent, setConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
   function validate(): FieldErrors {
     const next: FieldErrors = {};
@@ -66,15 +69,23 @@ export function VerifyScreen() {
     e.preventDefault();
     const found = validate();
     setErrors(found);
-    if (found.name || found.email) return;
+    // 미동의면 진행을 막고 이유를 노출한다(페르소나 C — 왜 막혔는지 알린다).
+    // 버튼은 aria-disabled로 비활성 상태를 알리되 클릭 자체는 받아 안내를 띄운다.
+    const consentMissing = !consent;
+    setConsentError(consentMissing);
+    if (found.name || found.email || consentMissing) return;
 
-    // 본인 확인 완료 — 신원을 세션에 저장하고 문제 안내로 전진(회원가입 없음).
+    // 본인 확인·동의 완료 — 신원을 세션에 저장하고 문제 안내로 전진(회원가입 없음).
     setCandidate(token, { name: name.trim(), email: email.trim() });
+    // 게이트 통과 지점에서 동의 여부·시각을 기록한다(멱등, S-3/M-4). 백엔드
+    // 부재로 저장은 localStorage 계층에 머문다(마스터플랜 항목1 의존).
+    recordConsent(token);
     navigate(nextStepPath(token, "verify")!);
   }
 
   const nameErrorId = "verify-name-error";
   const emailErrorId = "verify-email-error";
+  const consentErrorId = "verify-consent-error";
 
   return (
     <div className="flow-screen">
@@ -142,8 +153,44 @@ export function VerifyScreen() {
               )}
             </div>
 
+            {/* 데이터 열람 동의(S-1) — 입력 아래, 진행 버튼 위. 두 고지를 같은
+               무게로 나눠 싣고(페르소나 B), 체크해야만 다음 단계로 넘어간다. */}
+            <div className="verify-consent">
+              <p className="verify-consent__title">{s.consentTitle}</p>
+              <p className="verify-consent__statement">{s.consentReview}</p>
+              <p className="verify-consent__statement">{s.consentNoTraining}</p>
+              <label className="verify-consent__check">
+                <input
+                  type="checkbox"
+                  className="verify-consent__checkbox"
+                  checked={consent}
+                  aria-describedby={consentError ? consentErrorId : undefined}
+                  onChange={(e) => {
+                    setConsent(e.target.checked);
+                    if (consentError) setConsentError(false);
+                  }}
+                />
+                <span className="verify-consent__check-label">
+                  {s.consentCheckboxLabel}
+                </span>
+              </label>
+              {consentError && (
+                <p
+                  id={consentErrorId}
+                  className="input-field__error"
+                  role="alert"
+                >
+                  {s.consentRequired}
+                </p>
+              )}
+            </div>
+
             <div className="flow-actions flow-actions--start">
-              <button type="submit" className="btn">
+              <button
+                type="submit"
+                className="btn"
+                aria-disabled={consent ? undefined : true}
+              >
                 {s.primaryAction}
               </button>
             </div>

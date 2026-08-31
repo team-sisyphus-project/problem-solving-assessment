@@ -83,6 +83,22 @@ export const en = {
       errorNameRequired: "Please enter your name.",
       errorEmailRequired: "Please enter your email.",
       errorEmailInvalid: "Please enter a valid email address.",
+      /*
+       * 데이터 열람 동의(S-1) — 다음 단계로 넘어가기 전에 두는 명시적 동의 게이트.
+       * 두 고지를 같은 무게로 나눠 싣는다: (a) 평가자가 최종 결과뿐 아니라 해결
+       * 과정 내 입력·산출물(대화 로그)까지 열람 (b) 이 데이터는 LLM 학습 등 다른
+       * 목적으로 쓰지 않음. 페르소나 B(데이터 민감)를 위해 두 문장을 분리한다.
+       * 확정 법무/HR 카피는 범위 밖 — 요구사항 (a)(b)를 채우는 참고 카피다.
+       */
+      consentTitle: "Before you begin",
+      consentReview:
+        "During this assessment, the hiring team reviews not only your final result but the problem-solving process itself — the messages you exchange and the work you produce along the way.",
+      consentNoTraining:
+        "This data is used only to review your submission — never to train AI (LLM) models, and never for any other purpose.",
+      consentCheckboxLabel:
+        "I understand and agree to how my assessment data is reviewed.",
+      /** 미동의 상태로 진행을 시도할 때의 안내(페르소나 C — 왜 막혔는지 알린다) */
+      consentRequired: "Please agree to the notice above to continue.",
     },
     /**
      * 지난 제출 안내 — 이미 제출한 링크로 흐름에 다시 들어왔을 때.

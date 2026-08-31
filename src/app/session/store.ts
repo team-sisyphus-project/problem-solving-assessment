@@ -79,6 +79,14 @@ export interface InviteSession {
   /** 제출 시각(ISO). 미제출이면 null */
   submittedAt: string | null;
   /**
+   * 데이터 열람 동의 기록(S-3/M-4). 본인 확인 화면의 동의 게이트를 통과한
+   * 순간 한 번 찍힌다: given=true, at=동의 시각(ISO). 아직 동의 전이면 null.
+   *
+   * 지금은 백엔드(공유 저장소)가 없어 이 세션과 함께 localStorage에만 남는다
+   * (마스터플랜 항목1 의존). 백엔드 도입 후 실제 영속 저장으로 이어진다.
+   */
+  consent: { given: boolean; at: string } | null;
+  /**
    * 문제 풀이를 시작한 시각(ISO). 풀이 화면의 경과 시간 표시가 이 값을 기준으로
    * 센다. 새로고침해도 시간이 0으로 되돌아가지 않도록 세션에 남긴다.
    * 아직 시작하지 않았으면 null이며, 제한 시간이 아니라 **경과 시간**이다.
@@ -149,6 +157,7 @@ export function getSession(token: string): InviteSession | null {
       startedAt: parsed.startedAt ?? null,
       attempt: parsed.attempt ?? 0,
       history: parsed.history ?? [],
+      consent: parsed.consent ?? null,
     };
   } catch {
     return null;
@@ -175,6 +184,7 @@ export function getOrCreateSession(token: string): InviteSession {
     problem: assignProblem(token),
     messages: [],
     submittedAt: null,
+    consent: null,
     startedAt: null,
     attempt: 0,
     history: [],
@@ -228,6 +238,27 @@ export function markStarted(token: string): InviteSession {
   const session = getOrCreateSession(token);
   if (session.startedAt) return session;
   const next = { ...session, startedAt: new Date().toISOString() };
+  saveSession(next);
+  return next;
+}
+
+/**
+ * 데이터 열람 동의를 기록한다(본인 확인 화면의 동의 게이트 통과, S-3/M-4).
+ *
+ * 멱등 — 이미 기록됐으면 최초 동의 시각을 그대로 유지하고, 없을 때만
+ * given=true·at=지금(ISO)으로 찍는다. markStarted/markSubmitted와 같은
+ * "한 번만 찍히는 시각" 규약을 따른다.
+ *
+ * 지금은 백엔드(공유 저장소)가 없어 localStorage 계층에만 남는다(마스터플랜
+ * 항목1 의존). 저장 실패 시 처리 정책은 백엔드 도입 이후에 구체화한다.
+ */
+export function recordConsent(token: string): InviteSession {
+  const session = getOrCreateSession(token);
+  if (session.consent) return session;
+  const next = {
+    ...session,
+    consent: { given: true, at: new Date().toISOString() },
+  };
   saveSession(next);
   return next;
 }
