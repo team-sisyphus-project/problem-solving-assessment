@@ -1,123 +1,128 @@
 /*
- * Welcome intro — 웰컴 인트로 히어로 레이아웃 (A안 · 임팩트 3D)
+ * Welcome intro — welcome intro hero layout (Option A · Impact 3D)
  * ---------------------------------------------------------------------------
- * Spec: 웰컴 인트로 — 임팩트 3D 버전
+ * Spec: Welcome intro — Impact 3D version
  *
- * 흐름 4단계 화면과 달리 셸(app-shell) 밖에서 전면(full-bleed)으로 깔린다.
- * 참고 영상과 같은 **겹침** 구성이라 레이어가 위로 쌓이며, 카피가 항상 맨 위다.
+ * Unlike the four flow-step screens, this spreads full-bleed outside the
+ * shell (app-shell). It uses the same **overlapping** composition as the
+ * reference video, so layers stack upward with the copy always on top.
  *
- *   0. .welcome__sky      — 하늘·구름·능선을 그린 2D 캔버스(대체 경로의 배경)
- *   0. .welcome__canvas   — WebGL 캔버스(같은 그림을 씬 배경으로 다시 그려 굴절)
- *   1. .welcome__object   — 3D 대신 쓰이는 정적 SVG 오브젝트
- *   2. .welcome__brand / .welcome__content — 브랜드 마크 · 카피 · CTA
+ *   0. .welcome__sky      — 2D canvas painting the sky, clouds, and ridgeline (fallback-path backdrop)
+ *   0. .welcome__canvas   — WebGL canvas (repaints the same picture as the scene backdrop for refraction)
+ *   1. .welcome__object   — static SVG object used in place of 3D
+ *   2. .welcome__brand / .welcome__content — brand mark · copy · CTA
  *
- * 색·간격·서체·둥글기는 tokens.css의 var(--token)만 참조한다(하드코딩 0).
- * 하늘 위 텍스트는 무채색 --text-* 대신 --hero-text-* 후보 토큰을 쓴다 — 짙은
- * 하늘에서 --text-strong(#111827)은 대비가 나오지 않기 때문이다.
+ * Color, spacing, type, and corner radius reference only var(--token) from
+ * tokens.css (zero hardcoding). Text over the sky uses the --hero-text-*
+ * candidate tokens instead of the neutral --text-* — --text-strong (#111827)
+ * cannot achieve contrast against the deep sky.
  *
- * display·position·z-index·overflow·백분율/vmin 기반 배치처럼 "값을 바꿔도
- * 사용자가 색·간격으로 인지하지 못하는" 구조·구현 설정값만 리터럴이다
- * (ui-conventions 규칙 1의 명시적 예외).
+ * Only structural/implementation settings are literals — values like display,
+ * position, z-index, overflow, and percentage/vmin-based placement that
+ * "users would not perceive as color or spacing if changed" (an explicit
+ * exception to ui-conventions rule 1).
  * ---------------------------------------------------------------------------
  */
 
-/* 히어로 루트 — 뷰포트를 가득 채우고 레이어를 겹친다 */
+/* Hero root — fills the viewport and overlaps the layers */
 .welcome {
-  position: relative; /* 구조값 — 절대 배치 레이어의 기준 */
+  position: relative; /* structural — reference for absolutely positioned layers */
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* 구조값 */
-  overflow: hidden; /* 구조값 */
-  isolation: isolate; /* 구조값 — z-index 스택을 이 안으로 가둔다 */
+  min-height: 100vh; /* structural */
+  overflow: hidden; /* structural */
+  isolation: isolate; /* structural — confine the z-index stack inside */
   font-family: var(--font-family-base);
   color: var(--hero-text-strong);
 }
 
-/* 100dvh를 지원하면 모바일 주소창 높이 변화에도 히어로가 잘리지 않는다 */
+/* Where 100dvh is supported, the hero survives mobile address-bar height changes uncropped */
 @supports (min-height: 100dvh) {
   .welcome {
-    min-height: 100dvh; /* 구조값 */
+    min-height: 100dvh; /* structural */
   }
 }
 
-/* ── 레이어 0 — 하늘(2D 바탕 + WebGL) ────────────────────────────────── */
+/* ── Layer 0 — sky (2D base + WebGL) ─────────────────────────────────── */
 
 .welcome__sky,
 .welcome__canvas {
-  position: absolute; /* 구조값 */
-  inset: 0; /* 구조값 */
-  z-index: 0; /* 구현 설정값 */
-  display: block; /* 구조값 */
-  width: 100%; /* 구조값 */
-  height: 100%; /* 구조값 */
+  position: absolute; /* structural */
+  inset: 0; /* structural */
+  z-index: 0; /* implementation setting */
+  display: block; /* structural */
+  width: 100%; /* structural */
+  height: 100%; /* structural */
 }
 
 .welcome__canvas canvas {
-  display: block; /* 구조값 — 인라인 요소 여백 제거 */
-  width: 100%; /* 구조값 */
-  height: 100%; /* 구조값 */
+  display: block; /* structural — remove inline-element gap */
+  width: 100%; /* structural */
+  height: 100%; /* structural */
 }
 
-/* ── 레이어 1 — 정적 대체 오브젝트 ───────────────────────────────────── */
+/* ── Layer 1 — static fallback object ────────────────────────────────── */
 
 /*
- * 3D와 같은 자리·같은 비율. GlassAsterisk의 SIZE_BY_HEIGHT/SIZE_BY_WIDTH와
- * CENTER_Y를 CSS로 옮긴 것이라, 대체로 내려가도 화면 인상이 바뀌지 않는다.
+ * Same position and proportions as the 3D version. This ports
+ * GlassAsterisk's SIZE_BY_HEIGHT/SIZE_BY_WIDTH and CENTER_Y into CSS, so
+ * falling back does not change the screen's impression.
  */
 .welcome__object {
-  position: absolute; /* 구조값 */
-  top: 48%; /* 구조값 — 3D의 CENTER_Y와 같은 위치 */
-  left: 50%; /* 구조값 */
-  z-index: 1; /* 구현 설정값 */
-  width: min(46vh, 72vw); /* 구조값 — 3D의 크기 규칙과 동일 */
-  height: min(46vh, 72vw); /* 구조값 */
-  transform: translate(-50%, -50%); /* 구조값 */
-  pointer-events: none; /* 구조값 — 장식은 입력을 가로채지 않는다 */
+  position: absolute; /* structural */
+  top: 48%; /* structural — same position as the 3D CENTER_Y */
+  left: 50%; /* structural */
+  z-index: 1; /* implementation setting */
+  width: min(46vh, 72vw); /* structural — same sizing rule as the 3D version */
+  height: min(46vh, 72vw); /* structural */
+  transform: translate(-50%, -50%); /* structural */
+  pointer-events: none; /* structural — decoration must not intercept input */
 }
 
 .welcome__object svg {
-  display: block; /* 구조값 */
-  width: 100%; /* 구조값 */
-  height: 100%; /* 구조값 */
+  display: block; /* structural */
+  width: 100%; /* structural */
+  height: 100%; /* structural */
 }
 
-/* ── 레이어 2 — 브랜드 마크 · 카피 · CTA ─────────────────────────────── */
+/* ── Layer 2 — brand mark · copy · CTA ───────────────────────────────── */
 
-/* 상단 브랜드 마크 — 마케팅 내비 없이 제품 식별만(응시 화면 성격) */
+/* Top brand mark — product identity only, no marketing nav (this is an assessment screen) */
 .welcome__brand {
-  position: relative; /* 구조값 — 배경 레이어 위로 */
-  z-index: 2; /* 구현 설정값 */
+  position: relative; /* structural — above the backdrop layers */
+  z-index: 2; /* implementation setting */
   padding: var(--space-lg) var(--space-xl);
 }
 
 /*
- * 카피 기둥 — 오브젝트 **위**에 겹쳐 세로 가운데 정렬된다. 오브젝트를 옆이나
- * 아래로 밀어내지 않기 때문에, 같은 크기라도 화면을 압도하지 않고 배경 오브제로
- * 읽힌다(참고 영상과 같은 구성).
+ * Copy column — overlaps **on top of** the object, vertically centered.
+ * Because it never pushes the object aside or below, the object reads as a
+ * background objet without dominating the screen even at the same size
+ * (matching the reference video's composition).
  */
 .welcome__content {
-  position: relative; /* 구조값 */
-  z-index: 2; /* 구현 설정값 */
-  flex: 1 1 auto; /* 구조값 */
+  position: relative; /* structural */
+  z-index: 2; /* implementation setting */
+  flex: 1 1 auto; /* structural */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  box-sizing: border-box; /* 구조값 — 좌우 padding이 폭을 넘치지 않게 */
-  width: 100%; /* 구조값 */
+  box-sizing: border-box; /* structural — keep horizontal padding from overflowing the width */
+  width: 100%; /* structural */
   max-width: var(--hero-content-width);
-  margin-left: auto; /* 구조값 — 가운데 정렬 */
-  margin-right: auto; /* 구조값 */
+  margin-left: auto; /* structural — centered */
+  margin-right: auto; /* structural */
   padding: 0 var(--space-xl) var(--space-3xl);
-  text-align: center; /* 구조값 */
+  text-align: center; /* structural */
 }
 
 .welcome__eyebrow {
   margin: 0;
   font-size: var(--text-size-md);
   font-weight: var(--font-weight-regular);
-  font-style: italic; /* 구조값 — 참고 영상의 세리프 느낌 eyebrow */
+  font-style: italic; /* structural — the serif-feel eyebrow from the reference video */
   line-height: var(--line-height-tight);
   letter-spacing: var(--letter-spacing-wide);
   color: var(--hero-text-strong);
@@ -136,21 +141,21 @@
 
 .welcome__description {
   margin: 0;
-  /* 서브카피는 타이틀 바로 아래에 붙되 한 단계 떨어뜨린다 */
+  /* The subcopy sits directly under the title but stepped down one level */
   margin-top: var(--space-2xs);
   font-size: var(--text-size-lg);
   line-height: var(--line-height-relaxed);
   color: var(--hero-text-soft);
-  /* 유리 오브젝트 위에 겹쳐 놓이므로, 밝은 부분에서도 글자가 묻히지 않게 */
+  /* Layered over the glass object, so the text must not sink into its bright areas */
   text-shadow: var(--hero-text-shadow);
 }
 
-/* CTA는 카피 묶음에서 한 단계 더 떨어뜨려 행동으로 구분한다 */
+/* The CTA is set one more step apart from the copy group to distinguish it as an action */
 .welcome__content .btn--hero {
   margin-top: var(--space-xl);
 }
 
-/* ── 좁은 화면 — 표제 단계와 여백을 한 단계씩 낮춘다 ─────────────────── */
+/* ── Narrow screens — step the heading scale and spacing down one level ── */
 
 @media (max-width: 640px) {
   .welcome__brand {

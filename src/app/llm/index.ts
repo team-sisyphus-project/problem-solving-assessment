@@ -1,12 +1,15 @@
 /*
- * BYOP LLM 어댑터 계층 — 공개 진입점
+ * BYOP LLM adapter layer — public entry point
  * ---------------------------------------------------------------------------
- * `sendChat(provider, apiKey, messages)` 하나로 선택된 제공자에게 대화를 보내고
- * 응답 텍스트를 받는다. 제공자별 REST 세부(엔드포인트·헤더·요청/응답 매핑)는
- * providers/* 어댑터가 격리한다. 화면·서버·키 입력 필드는 이 계층의 범위 밖이다.
+ * A single `sendChat(provider, apiKey, messages)` sends the conversation to
+ * the selected provider and returns the response text. Provider-specific REST
+ * details (endpoints, headers, request/response mapping) are isolated in the
+ * providers/* adapters. Screens, servers, and the key input field are outside
+ * this layer's scope.
  *
- * 비밀값 원칙: apiKey는 인자로만 흐르고 요청 헤더에서만 소비된다. 이 계층은
- * 어디에도 키를 저장·로그하지 않는다(영속 로직 자체가 없다).
+ * Secret principle: apiKey flows only as an argument and is consumed only in
+ * request headers. This layer never stores or logs the key anywhere (it has
+ * no persistence logic at all).
  * ---------------------------------------------------------------------------
  */
 
@@ -19,12 +22,13 @@ import {
 } from "./types";
 
 /**
- * 선택된 제공자·키로 대화를 전송하고 LLM 응답 텍스트를 반환한다.
+ * Sends the conversation with the selected provider and key, and returns the
+ * LLM response text.
  *
- * @param provider 제공자 식별자(gpt/claude/gemini)
- * @param apiKey   지원자 본인 키 — 인자로만 전달, 저장·로그하지 않음
- * @param messages 대화 로그(user로 시작해 교대) — 비어 있으면 안 됨
- * @throws {LlmError} 알 수 없는 제공자·빈 키·빈 메시지, 또는 어댑터 호출 실패 시
+ * @param provider Provider identifier (gpt/claude/gemini)
+ * @param apiKey   The candidate's own key — passed as an argument only, never stored or logged
+ * @param messages Conversation log (starts with user and alternates) — must not be empty
+ * @throws {LlmError} On an unknown provider, empty key, empty messages, or adapter call failure
  */
 export async function sendChat(
   provider: ProviderId,
@@ -34,7 +38,7 @@ export async function sendChat(
   if (!isProviderId(provider)) {
     throw new LlmError(
       provider,
-      `알 수 없는 제공자입니다: ${String(provider)}.`,
+      `Unknown provider: ${String(provider)}.`,
     );
   }
   if (!apiKey || apiKey.trim().length === 0) {

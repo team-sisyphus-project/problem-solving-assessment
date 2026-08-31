@@ -1,25 +1,32 @@
 /*
- * 클라이언트 라우터 — 웰컴 인트로 + 지원자 흐름 화면 전환 골격 (초대 토큰 스코프)
+ * Client router — welcome intro + candidate flow screen-transition skeleton (invite-token scope)
  * ---------------------------------------------------------------------------
- * 모든 응시 경로는 초대 링크 `/invite/:token` 아래에 중첩된다. 토큰 스코프는
- * 두 층으로 나뉜다.
+ * Every assessment path is nested under the invite link `/invite/:token`. The
+ * token scope splits into two layers.
  *
- *   1) 토큰 인덱스(`/invite/:token`) = 웰컴 인트로 — 셸(AppShell) **밖**에서
- *      전면(full-bleed) 히어로로 렌더된다. 단계 표시자·콘텐츠 컨테이너 같은
- *      셸 골격을 쓰지 않기 때문이다(인트로는 흐름 단계가 아니다).
- *   2) 그 아래 하위 경로 = 기존 흐름 4단계 — pathless 레이아웃 라우트로 묶어
- *      AppShell을 씌우고, 메인 아웃렛(<Outlet/>)에서 한 번에 한 화면만 교체
- *      렌더한다. 4단계 구조(본인 확인 · 문제 안내 · 문제 풀이 · 제출 완료)와
- *      셸 계층의 제출 후 잠금 가드는 그대로다.
+ *   1) Token index (`/invite/:token`) = welcome intro — rendered as a
+ *      full-bleed hero **outside** the shell (AppShell), because it uses none
+ *      of the shell skeleton such as the step indicator or content container
+ *      (the intro is not a flow step).
+ *   2) The sub-paths below it = the existing 4-step flow — wrapped in a
+ *      pathless layout route that applies AppShell, with the main outlet
+ *      (<Outlet/>) swapping in exactly one screen at a time. The 4-step
+ *      structure (identity verification · problem brief · problem solving ·
+ *      submission complete) and the shell-level post-submission lock guard
+ *      are unchanged.
  *
- * 딥링크 fallback 보장:
- *  - HashRouter를 써서 정적 배포(단일 index.html)에서도 `/#/invite/{token}/solve`
- *    같은 중첩 경로 직접 진입이 항상 index.html을 로드한다(서버 fallback 불요).
- *  - 토큰 내부의 알 수 없는 하위 경로는 해당 토큰의 첫 단계(본인 확인)로 replace.
- *    인트로가 아니라 첫 단계로 보낸다 — 흐름 중간 딥링크를 인트로로 되돌리면
- *    이미 시작한 응시가 처음으로 튕기기 때문이다.
- *  - 토큰이 없는 루트(`/`)·완전히 알 수 없는 경로는 미리보기가 끊기지 않도록
- *    데모 토큰의 **인트로**로 replace 이동시킨다(첫 진입과 동일한 경험).
+ * Deep-link fallback guarantees:
+ *  - HashRouter is used so that even on a static deployment (single
+ *    index.html), directly entering a nested path like
+ *    `/#/invite/{token}/solve` always loads index.html (no server fallback
+ *    needed).
+ *  - Unknown sub-paths inside a token replace-navigate to that token's first
+ *    step (identity verification). We send them to the first step, not the
+ *    intro — bouncing a mid-flow deep link back to the intro would throw an
+ *    already-started assessment back to the beginning.
+ *  - The tokenless root (`/`) and completely unknown paths replace-navigate
+ *    to the demo token's **intro** so previews are never broken (the same
+ *    experience as a first entry).
  * ---------------------------------------------------------------------------
  */
 
@@ -40,7 +47,7 @@ import { CompleteScreen } from "./screens/CompleteScreen";
 
 const demoWelcomePath = welcomePath(DEMO_TOKEN);
 
-/** 토큰 내부의 알 수 없는 하위 경로 → 해당 토큰의 첫 단계로 */
+/** Unknown sub-path inside a token → that token's first step */
 function InviteFallback() {
   const { token } = useParams();
   return (
@@ -52,9 +59,9 @@ const routes: RouteObject[] = [
   {
     path: "/invite/:token",
     children: [
-      // 흐름 앞단 — 셸 밖 전면 히어로(단계 표시자 없음).
+      // Ahead of the flow — full-bleed hero outside the shell (no step indicator).
       { index: true, element: <WelcomeScreen /> },
-      // 흐름 4단계 — pathless 레이아웃 라우트로 셸을 씌운다.
+      // The 4 flow steps — wrapped in the shell via a pathless layout route.
       {
         element: <AppShell />,
         children: [
@@ -62,13 +69,13 @@ const routes: RouteObject[] = [
           { path: "brief", element: <BriefScreen /> },
           { path: "solve", element: <SolveScreen /> },
           { path: "complete", element: <CompleteScreen /> },
-          // 토큰 내부 딥링크 fallback — 알 수 없는 하위 경로는 첫 단계로.
+          // Deep-link fallback inside a token — unknown sub-paths go to the first step.
           { path: "*", element: <InviteFallback /> },
         ],
       },
     ],
   },
-  // 토큰 없는 진입은 데모 토큰의 인트로로(미리보기 연속성).
+  // Tokenless entries go to the demo token's intro (preview continuity).
   { index: true, path: "/", element: <Navigate to={demoWelcomePath} replace /> },
   { path: "*", element: <Navigate to={demoWelcomePath} replace /> },
 ];

@@ -1,22 +1,28 @@
 /*
- * 흐름 구조 (고정) — 지원자 선형 응시 흐름 4단계 · 토큰 스코프
+ * Flow structure (fixed) — the candidate's linear 4-step assessment flow · token scope
  * ---------------------------------------------------------------------------
- * Spec: components/app-shell/base.md · components/navigation/base.md 의
- * "흐름 구조 (고정)" 규칙을 코드로 옮긴 단일 정의. 라우터·단계 표시자
- * (navigation)·화면 전환이 모두 이 배열을 공유하므로 단계 순서가 한 곳에서만
- * 관리된다(산개 방지).
+ * Spec: the single definition that translates the "flow structure (fixed)"
+ * rules from components/app-shell/base.md and components/navigation/base.md
+ * into code. The router, step indicator (navigation), and screen transitions
+ * all share this array, so step order is managed in exactly one place (no
+ * scattering).
  *
- *   1. 본인 확인  →  2. 문제 안내  →  3. 문제 풀이  →  4. 제출 완료
+ *   1. Identity verification  →  2. Problem brief  →  3. Problem solving  →  4. Submission complete
  *
- * - 모든 단계는 초대 토큰 스코프(`/invite/:token/...`) 아래에 있다. 각 단계의
- *   `segment`는 토큰 베이스에 상대적인 경로 조각이다.
- * - 토큰 인덱스(`/invite/:token`)는 흐름 4단계가 아니라 그 **앞단**의 웰컴 인트로
- *   화면이 차지한다(`welcomePath`). 인트로는 단계 표시자에 노출되지 않으며, 흐름의
- *   첫 단계는 여전히 본인 확인(verify)이다 — 4단계 구조 자체는 그대로다.
- * - 순서는 좌→우로 고정. 이전은 완료, 이후는 예정.
- * - 제출 완료(4)는 흐름의 종료 상태(이후 전진 없음).
- * - 이전 흐름의 "LLM 연결/선택(connect)" 단계는 제거되었다(회원가입/연결 없이
- *   본인 확인 → 문제 안내로 직행). 본인 확인(verify)·문제 안내(brief)가 신설.
+ * - Every step lives under the invite-token scope (`/invite/:token/...`).
+ *   Each step's `segment` is a path fragment relative to the token base.
+ * - The token index (`/invite/:token`) is occupied not by one of the 4 flow
+ *   steps but by the welcome intro screen that comes **before** them
+ *   (`welcomePath`). The intro does not appear in the step indicator, and the
+ *   first flow step is still identity verification (verify) — the 4-step
+ *   structure itself is unchanged.
+ * - Order is fixed left → right. Earlier steps are done, later ones upcoming.
+ * - Submission complete (4) is the flow's terminal state (no forward motion
+ *   afterwards).
+ * - The previous flow's "LLM connect/select (connect)" step was removed
+ *   (identity verification → problem brief directly, with no sign-up or
+ *   connection). Identity verification (verify) and problem brief (brief) are
+ *   new.
  * ---------------------------------------------------------------------------
  */
 
@@ -24,19 +30,19 @@ import { strings } from "./i18n";
 
 export type StepId = "verify" | "brief" | "solve" | "complete";
 
-/** 초대 토큰 스코프 라우트의 베이스 경로 */
+/** Base path for invite-token-scoped routes */
 export const INVITE_BASE = "/invite";
 
 export interface FlowStep {
-  /** 단계 식별자 */
+  /** Step identifier */
   id: StepId;
-  /** 토큰 베이스에 상대적인 경로 조각. 첫 단계(verify)는 인덱스(빈 문자열) */
+  /** Path fragment relative to the token base. The first step (verify) is the index (empty string) */
   segment: string;
-  /** 단계 표시자에 노출되는 짧은 레이블 */
+  /** Short label shown in the step indicator */
   label: string;
 }
 
-/** 선형 흐름의 단일 정의 — 순서가 곧 단계 번호(1-based) */
+/** Single definition of the linear flow — order is the step number (1-based) */
 export const FLOW_STEPS: readonly FlowStep[] = [
   { id: "verify", segment: "verify", label: strings.screens.verify.stepLabel },
   { id: "brief", segment: "brief", label: strings.screens.brief.stepLabel },
@@ -44,7 +50,7 @@ export const FLOW_STEPS: readonly FlowStep[] = [
   { id: "complete", segment: "complete", label: strings.screens.complete.stepLabel },
 ] as const;
 
-/** 토큰 스코프에서 특정 단계의 절대 경로를 만든다(해시 라우팅 기준) */
+/** Builds the absolute path of a given step within the token scope (hash routing) */
 export function invitePath(token: string, id: StepId): string {
   const step = FLOW_STEPS.find((s) => s.id === id) ?? FLOW_STEPS[0];
   const base = `${INVITE_BASE}/${token}`;
@@ -52,45 +58,46 @@ export function invitePath(token: string, id: StepId): string {
 }
 
 /**
- * 웰컴 인트로 화면의 경로 — 초대 링크의 토큰 인덱스(`/invite/:token`).
- * 흐름 단계가 아니라 흐름 진입 직전의 환영 한 장이라 FLOW_STEPS에 넣지 않는다.
+ * Path of the welcome intro screen — the invite link's token index
+ * (`/invite/:token`). It is not a flow step but a single welcome page right
+ * before entering the flow, so it is not included in FLOW_STEPS.
  */
 export function welcomePath(token: string): string {
   return `${INVITE_BASE}/${token}`;
 }
 
-/** 토큰 흐름의 첫 단계 경로(인트로 CTA의 목적지·흐름 내 fallback 기본값) */
+/** Path of the token flow's first step (the intro CTA's destination and the in-flow fallback default) */
 export function firstStepPath(token: string): string {
   return invitePath(token, FLOW_STEPS[0].id);
 }
 
-/** 단계 인덱스(0-based). 없으면 -1 */
+/** Step index (0-based). -1 if not found */
 export function stepIndex(id: StepId): number {
   return FLOW_STEPS.findIndex((s) => s.id === id);
 }
 
-/** 다음 단계의 토큰 스코프 경로. 종료 단계면 null */
+/** Token-scoped path of the next step. null if this is the terminal step */
 export function nextStepPath(token: string, id: StepId): string | null {
   const i = stepIndex(id);
   if (i < 0 || i >= FLOW_STEPS.length - 1) return null;
   return invitePath(token, FLOW_STEPS[i + 1].id);
 }
 
-/** 이전 단계의 토큰 스코프 경로. 첫 단계면 null */
+/** Token-scoped path of the previous step. null if this is the first step */
 export function prevStepPath(token: string, id: StepId): string | null {
   const i = stepIndex(id);
   if (i <= 0) return null;
   return invitePath(token, FLOW_STEPS[i - 1].id);
 }
 
-/** 경로 조각(토큰 베이스 이후 부분)에서 현재 단계 id를 파생한다. 매칭 없으면 첫 단계 */
+/** Derives the current step id from a path fragment (the part after the token base). Falls back to the first step if nothing matches */
 export function stepIdFromSegment(segment: string): StepId {
   const clean = segment.replace(/^\/+|\/+$/g, "");
   const found = FLOW_STEPS.find((s) => s.segment === clean);
   return found ? found.id : FLOW_STEPS[0].id;
 }
 
-/** 단계 상태(완료/현재/예정) — 색 단독이 아닌 텍스트·형태 병행용 */
+/** Step status (done/current/upcoming) — for text and shape alongside color, never color alone */
 export type StepStatus = "done" | "current" | "upcoming";
 
 export function stepStatus(stepIdx: number, currentIdx: number): StepStatus {

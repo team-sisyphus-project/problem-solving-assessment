@@ -1,21 +1,21 @@
 /*
- * Button — 프리미티브 (framework-agnostic)
+ * Button — primitive (framework-agnostic)
  * ---------------------------------------------------------------------------
  * Spec: components/button/{base,secondary,low-emphasis}.md
- * 클릭 가능한 액션 컨트롤. 위계: primary(=.btn) > secondary > low-emphasis.
- * 모든 디자인 값은 tokens.css의 var(--token)만 참조한다(하드코딩 0).
- * 값이 아닌 구조(display/cursor/transition 등)만 리터럴을 쓴다.
+ * Clickable action control. Hierarchy: primary (=.btn) > secondary > low-emphasis.
+ * All design values reference only var(--token) from tokens.css (zero hardcoding).
+ * Only structure, not values (display/cursor/transition, etc.), uses literals.
  *
- * 사용:
- *   <button class="btn">주요 액션</button>
- *   <button class="btn btn--secondary">보조</button>
- *   <button class="btn btn--low-emphasis">취소</button>
- *   아이콘: <span class="btn__icon">…</span> 를 레이블 앞/뒤에 둔다.
+ * Usage:
+ *   <button class="btn">Primary action</button>
+ *   <button class="btn btn--secondary">Secondary</button>
+ *   <button class="btn btn--low-emphasis">Cancel</button>
+ *   Icon: place <span class="btn__icon">…</span> before/after the label.
  * ---------------------------------------------------------------------------
  */
 
 .btn {
-  /* 구조 (구현 설정값 — 토큰 아님) */
+  /* Structure (implementation settings — not tokens) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -25,26 +25,27 @@
   text-decoration: none;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
-  /* 간격 (spacing) */
+  /* Spacing */
   gap: var(--space-2xs);
   padding: var(--space-xs) var(--space-md);
 
-  /* 서체 (typography) */
+  /* Typography */
   font-family: var(--font-family-base);
   font-size: var(--text-size-sm);
   font-weight: var(--font-weight-medium);
   line-height: var(--line-height-tight);
 
-  /* 모서리 (radius) — 알약형. 웰컴 인트로의 입체 CTA와 흐름 화면 버튼이 같은
-     형태를 공유해, 히어로에서 셸로 넘어가도 컨트롤의 인상이 끊기지 않는다. */
+  /* Corners (radius) — pill shape. The welcome intro's 3D CTA and the flow
+     screen buttons share the same shape, so the controls' impression stays
+     unbroken moving from hero to shell. */
   border-radius: var(--radius-full);
 
-  /* 경계 (border-width + color) — Base는 채움이라 경계는 투명 */
+  /* Border (border-width + color) — Base is filled, so the border is transparent */
   border-style: solid;
   border-width: var(--border-width-sm);
   border-color: transparent;
 
-  /* 색 (color) — primary: accent 채움 */
+  /* Color — primary: accent fill */
   background-color: var(--accent-default);
   color: var(--text-on-accent);
 }
@@ -76,7 +77,7 @@
   color: var(--text-subtle);
 }
 
-/* ---- Variant: secondary — 무채색 표면 + 경계선, 대비를 낮춘 부차 액션 ---- */
+/* ---- Variant: secondary — neutral surface + outline, a lower-contrast secondary action ---- */
 .btn--secondary {
   background-color: var(--surface-base);
   border-color: var(--border-default);
@@ -98,7 +99,7 @@
   color: var(--text-subtle);
 }
 
-/* ---- Variant: low-emphasis — 표면/경계 없이 텍스트만, 가장 낮은 무게 ---- */
+/* ---- Variant: low-emphasis — text only, no surface/border, the lowest weight ---- */
 .btn--low-emphasis {
   background-color: transparent;
   border-color: transparent;
@@ -120,39 +121,42 @@
 }
 
 
-/* ---- Variant: hero — 웰컴 인트로의 입체 알약 CTA ------------------------
- * 참고 영상의 버튼을 그대로 옮긴 변형이다. 바닥에 깔린 푸른 광채 + 아래쪽
- * 압출면(box-shadow)으로 두께를 만들고, 아주 느리게 기울며 떠 있다.
- * 히어로 한 곳에서만 쓴다 — 흐름 4단계의 버튼은 움직이지 않는다(원칙 3).
+/* ---- Variant: hero — the welcome intro's 3D pill CTA ---------------------
+ * A variant ported straight from the reference video's button. A blue glow
+ * spread on the ground plus a lower extrusion face (box-shadow) create
+ * thickness, and it floats while tilting very slowly.
+ * Used only in the hero — buttons in the four flow steps do not move
+ * (principle 3).
  *
- * transform/animation 타이밍·각도는 구현 설정값이라 리터럴이다.
+ * transform/animation timing and angles are implementation settings, so they
+ * are literals.
  * ---------------------------------------------------------------------- */
 .btn--hero {
-  position: relative; /* 구조값 — 광채(::before)의 기준 */
+  position: relative; /* structural — reference for the glow (::before) */
   padding: var(--space-sm) var(--space-2xl);
   font-size: var(--text-size-lg);
   font-weight: var(--font-weight-semibold);
 
-  /* 아래쪽 압출면(두께) + 바닥 광채 */
+  /* Lower extrusion face (thickness) + ground glow */
   box-shadow:
     0 var(--space-2xs) 0 var(--accent-active),
     0 var(--space-md) var(--space-xl) var(--hero-cta-glow);
 
-  /* 기울어진 채 아주 느리게 떠 있는다 */
+  /* Floats very slowly, held at a tilt */
   animation: btn-hero-float 7s ease-in-out infinite;
   transition: box-shadow 0.2s ease, background-color 0.15s ease;
 }
 
-/* 버튼 뒤에 번지는 푸른 광채 — 영상의 발광을 blur로 근사한다 */
+/* The blue glow spreading behind the button — approximates the video's bloom with blur */
 .btn--hero::before {
   content: "";
-  position: absolute; /* 구조값 */
-  inset: 0; /* 구조값 */
-  z-index: -1; /* 구현 설정값 — 버튼 표면 아래 */
+  position: absolute; /* structural */
+  inset: 0; /* structural */
+  z-index: -1; /* implementation setting — below the button surface */
   border-radius: inherit;
   background-color: var(--accent-default);
-  filter: blur(18px); /* 구현 설정값 */
-  opacity: 0.65; /* 구현 설정값 */
+  filter: blur(18px); /* implementation setting */
+  opacity: 0.65; /* implementation setting */
 }
 
 .btn--hero:hover {
@@ -161,7 +165,7 @@
     0 var(--space-lg) var(--space-2xl) var(--hero-cta-glow);
 }
 
-/* 눌리면 압출면이 사라지며 실제로 눌린 것처럼 내려앉는다 */
+/* On press the extrusion face disappears and it sinks as if truly pushed down */
 .btn--hero:active {
   box-shadow: 0 var(--space-3xs) 0 var(--accent-active);
 }
@@ -178,7 +182,7 @@
   }
 }
 
-/* 모션 축소 요청 — 기울임·부유를 멈추고 두께와 광채만 남긴다 */
+/* Reduced-motion request — stop the tilt and float, keeping only thickness and glow */
 @media (prefers-reduced-motion: reduce) {
   .btn--hero {
     animation: none;

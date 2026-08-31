@@ -1,7 +1,8 @@
 /*
- * CompleteScreen — 흐름 4단계: 제출 완료 (종료 상태)
+ * CompleteScreen — flow step 4: submission complete (terminal state)
  * ---------------------------------------------------------------------------
- * 흐름의 종료 상태다(이후 전진 없음). 처음으로 돌아가는 동작만 제공한다.
+ * The terminal state of the flow (no forward progression afterward). Only a
+ * return-to-start action is provided.
  * ---------------------------------------------------------------------------
  */
 

@@ -1,14 +1,18 @@
 /*
- * 언어 정책 — 사용자 대면 문자열은 영어 하나뿐
+ * Language policy — user-facing strings are English only
  * ---------------------------------------------------------------------------
- * 이 제품은 한국어를 지원하지 않는다. 화면에 나가는 모든 문구는 영어여야 하며,
- * 코드 주석(팀 내부 문서)만 한국어를 유지한다.
+ * This product does not support Korean. Every string that reaches the screen
+ * must be English; only code comments (internal team documentation) may keep
+ * other languages.
  *
- * 회귀가 조용히 스며드는 자리가 둘 있어 여기서 못박는다.
- *   1) 로케일 사전 — 새 키를 급히 넣다가 한국어가 섞이는 경우.
- *   2) 목업 문제 데이터 — i18n 사전 밖의 도메인 콘텐츠라 규약 검사에서 빠지기 쉽다.
+ * There are two spots where regressions can quietly creep in, so we pin them
+ * down here:
+ *   1) The locale dictionary — Korean slipping in when a new key is added in a hurry.
+ *   2) Mock problem data — domain content outside the i18n dictionary, easy to
+ *      miss in convention checks.
  *
- * 사전 전체를 재귀로 훑어 한글 음절이 하나라도 있으면 실패시킨다.
+ * We recursively walk the whole dictionary and fail if even a single Hangul
+ * character appears.
  * ---------------------------------------------------------------------------
  */
 
@@ -16,10 +20,10 @@ import { describe, it, expect } from "vitest";
 import { defaultLocale, locales, strings } from "../../src/app/i18n";
 import { PROBLEM_POOL } from "../../src/app/session/problems";
 
-/** 한글 음절·자모 범위 */
-const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/;
+/** Hangul syllable and jamo ranges */
+const HANGUL = /[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/;
 
-/** 중첩 사전을 훑어 "경로 → 문자열" 목록으로 편다 */
+/** Flattens a nested dictionary into a "path -> string" list */
 function flatten(value: unknown, path: string[] = []): [string, string][] {
   if (typeof value === "string") return [[path.join("."), value]];
   if (value && typeof value === "object") {
@@ -30,22 +34,23 @@ function flatten(value: unknown, path: string[] = []): [string, string][] {
   return [];
 }
 
-describe("언어 정책 — 영어 전용 (한국어 미지원)", () => {
-  it("기본 로케일은 en이고, 등록된 로케일도 en 하나뿐이다", () => {
+describe("Language policy — English only (no Korean support)", () => {
+  it("the default locale is en, and en is the only registered locale", () => {
     expect(defaultLocale).toBe("en");
     expect(Object.keys(locales)).toEqual(["en"]);
   });
 
-  it("로케일 사전의 모든 문구에 한글이 없다", () => {
+  it("no locale dictionary string contains Hangul", () => {
     const offenders = flatten(strings)
       .filter(([, text]) => HANGUL.test(text))
       .map(([key]) => key);
     expect(offenders).toEqual([]);
   });
 
-  it("화면에 찍히는 날짜·시각도 영어로 나온다(브라우저 로케일에 끌려가지 않게)", () => {
-    // toLocaleString()을 인자 없이 쓰면 한국어 브라우저에서 "오후 9:28"처럼
-    // 한글이 섞인다. 앱 로케일을 명시했는지 여기서 못박는다.
+  it("dates and times rendered on screen come out in English (not pulled along by the browser locale)", () => {
+    // Calling toLocaleString() with no arguments mixes in Hangul on a Korean
+    // browser (e.g. an AM/PM marker in Korean). We pin down here that the app
+    // locale is passed explicitly.
     const rendered = new Date("2026-08-27T12:28:58.000Z").toLocaleString(
       defaultLocale,
       { dateStyle: "medium", timeStyle: "short" },
@@ -53,7 +58,7 @@ describe("언어 정책 — 영어 전용 (한국어 미지원)", () => {
     expect(HANGUL.test(rendered)).toBe(false);
   });
 
-  it("목업 문제 데이터(제목·설명)에도 한글이 없다", () => {
+  it("mock problem data (title and description) contains no Hangul either", () => {
     const offenders = PROBLEM_POOL.filter(
       (problem) => HANGUL.test(problem.title) || HANGUL.test(problem.description),
     ).map((problem) => problem.id);

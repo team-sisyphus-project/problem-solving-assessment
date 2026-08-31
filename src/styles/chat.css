@@ -1,52 +1,60 @@
 /*
- * Chat — 문제 풀이(채팅) 화면 Component 스타일 (framework-agnostic)
+ * Chat — problem-solving (chat) screen Component styles (framework-agnostic)
  * ---------------------------------------------------------------------------
  * Spec:
  *   components/conversation/base.md
- *   components/provider-group/base.md  (선택 상세는 screens.css, 연결 자리만 여기)
+ *   components/provider-group/base.md  (selection details live in screens.css; only the connect slot is here)
  *   components/message-bubble/{base,applicant}.md
  *   components/composer/base.md
  *
- * 참조 화면(지원자용 문제 풀이=채팅)을 구성하는 Component:
- *   conversation   — 상단 제공자 선택 슬롯(provider-group 임베드) + 메시지 스택
- *   message-bubble — 한 번의 발화 말풍선. base=AI(무채색) / --applicant=지원자(accent-subtle)
- *   composer       — 하단 입력(input 재사용) + 전송(button 재사용) 묶음
+ * Components composing the reference screen (candidate problem solving = chat):
+ *   conversation   — top provider selection slot (provider-group embed) + message stack
+ *   message-bubble — a chat bubble for one utterance. base=AI (neutral) / --applicant=candidate (accent-subtle)
+ *   composer       — bottom input (input reuse) + send (button reuse) group
  *
- * 모든 디자인 값(색·서체·간격·둥글기·경계)은 tokens.css의 var(--token)만
- * 참조한다(하드코딩 0). 구조/레이아웃 값(display·flex·align-self·overflow·
- * width:100% 등)만 리터럴을 쓴다 — coding.md "구현 설정값" 범주로 하드코딩
- * 위반이 아니다. 좌/우 정렬은 발화 주체 배치(레이아웃)이며 디자인 토큰이 아니다.
+ * All design values (color, type, spacing, radius, borders) reference only
+ * var(--token) from tokens.css (zero hardcoding). Only structural/layout
+ * values (display, flex, align-self, overflow, width:100%, etc.) use
+ * literals — they fall under coding.md's "implementation settings" category
+ * and are not a hardcoding violation. Left/right alignment is speaker
+ * placement (layout), not a design token.
  * ---------------------------------------------------------------------------
  */
 
 /* =========================================================================
- * conversation — 대화 목록 컨테이너
- * 상단 제공자 선택 슬롯 + 스크롤되는 메시지 스택 + (하단은 SolveScreen이 composer 배치).
- * 읽기 폭은 sizing/base(container-width-lg). 셸(container--wide)도 lg라 정합.
+ * conversation — conversation list container
+ * Top provider selection slot + scrolling message stack + (the composer at
+ * the bottom is placed by SolveScreen).
+ * Reading width is sizing/base (container-width-lg). The shell
+ * (container--wide) is also lg, so they agree.
  * ========================================================================= */
 .conversation {
-  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
+  box-sizing: border-box; /* structural — keep padding from overflowing the width */
   display: flex;
   flex-direction: column;
-  width: 100%; /* 구조값 — 셸 컨테이너 폭에 맞춤 */
-  max-width: var(--container-width-lg); /* sizing: 넓은 읽기 폭 */
+  width: 100%; /* structural — fit the shell container width */
+  max-width: var(--container-width-lg); /* sizing: wide reading width */
   margin-left: auto;
   margin-right: auto;
-  gap: var(--space-sm); /* 선택 슬롯 ↔ 본문 사이 */
+  gap: var(--space-sm); /* between the selection slot and the body */
 }
 
 /* -------------------------------------------------------------------------
- * 제공자 선택 슬롯 — 본인 API 키 연결 자리(BYOP Extension)
+ * Provider selection slot — the place to connect one's own API key (BYOP Extension)
  * -------------------------------------------------------------------------
- * 선택 메커니즘 자체(.provider-group / .provider-group__* / 선택 시 accent 승격)는
- * screens.css에 전역 정의되어 있어 이 화면이 그대로 재사용한다(spec: 선택 상세의
- * 단일 출처는 provider-group Base). 여기서는 provider-group의 선택적 구성 요소인
- * "연결 자리"를 참조 화면 슬롯용으로 신설한다(boundary: chat.css).
+ * The selection mechanism itself (.provider-group / .provider-group__* /
+ * accent promotion on selection) is defined globally in screens.css and this
+ * screen reuses it as-is (spec: the single source for selection details is
+ * the provider-group Base). Here we introduce the "connect slot", an optional
+ * provider-group component, for the reference screen's slot (boundary:
+ * chat.css).
  *
- * 연결 자리는 선택한 제공자의 본인 API 키를 직접 입력하는 활성 자리다(BYOP).
- * 입력 컨트롤은 input 프리미티브(.input-field/.input)를 그대로 임베드한다. 활성
- * 상태이므로 solid 경계로 그룹을 두른다(예약 placeholder의 dashed에서 승격).
- * 모든 색·서체·간격·둥글기·경계 두께는 var(--token) 참조(하드코딩 0). */
+ * The connect slot is the active place where the candidate enters their own
+ * API key for the chosen provider (BYOP). The input control embeds the input
+ * primitive (.input-field/.input) as-is. Being active, the group is bounded
+ * by a solid border (promoted from the reserved placeholder's dashed).
+ * All colors, type, spacing, radii, and border widths reference var(--token)
+ * (zero hardcoding). */
 .provider-group__connect {
   display: flex;
   flex-direction: column;
@@ -54,7 +62,7 @@
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   background-color: var(--surface-subtle);
-  border-style: solid; /* 구조값 — 활성 입력 그룹 경계 */
+  border-style: solid; /* structural — active input group boundary */
   border-width: var(--border-width-sm);
   border-color: var(--border-subtle);
 }
@@ -63,7 +71,7 @@
   font-size: var(--text-size-sm);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
-  color: var(--text-strong); /* 활성 톤 */
+  color: var(--text-strong); /* active tone */
 }
 
 .provider-group__connect-hint {
@@ -73,47 +81,48 @@
   color: var(--text-muted);
 }
 
-/* 대화 영역 — 메시지 항목을 시간순으로 쌓는 세로 스택(스크롤 영역) */
+/* Conversation area — a vertical stack of messages in chronological order (scroll region) */
 .conversation__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md); /* 메시지 항목 사이 세로 간격 */
-  overflow-y: auto; /* 구조값 — 긴 대화 스크롤 */
-  padding: var(--space-lg); /* 대화 영역 안쪽 여백 */
+  gap: var(--space-md); /* vertical spacing between message items */
+  overflow-y: auto; /* structural — scroll long conversations */
+  padding: var(--space-lg); /* conversation area inner padding */
   border-radius: var(--radius-lg);
   background-color: var(--surface-subtle);
 }
 
-/* 빈 상태(empty-state)는 프리미티브 선언을 그대로 재사용.
- * 대기 표시(응답 '생각 중')는 message-bubble/pending Extension으로, AI base
- * 말풍선(무채색·좌측 정렬) 안에 작성자 라벨 + loading 인디케이터를 담는다.
- * message-bubble이 이미 align-self: flex-start(AI측 좌측)를 부여하므로 여기서는
- * 대기 자리 의도를 명시적으로 재확인만 한다(레이아웃 값, 디자인 토큰 아님). */
+/* The empty state reuses the primitive's declarations as-is.
+ * The pending indicator (response "thinking") is a message-bubble/pending
+ * Extension: the AI base chat bubble (neutral, left-aligned) containing an
+ * author label + loading indicator. message-bubble already applies
+ * align-self: flex-start (AI side, left), so here we only explicitly
+ * reconfirm the pending slot's intent (a layout value, not a design token). */
 .conversation__pending {
-  align-self: flex-start; /* 레이아웃 — AI 응답 자리(좌측) */
+  align-self: flex-start; /* layout — AI response slot (left) */
 }
 
 /* =========================================================================
- * message-bubble — 발화 말풍선 (base = AI 응답)
+ * message-bubble — chat bubble for one utterance (base = AI response)
  * ========================================================================= */
 .message-bubble {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs); /* 작성자·본문·메타 세로 간격 */
-  max-width: var(--container-width-md); /* sizing: 가독 measure 제한 */
+  gap: var(--space-2xs); /* vertical spacing between author, body, and meta */
+  max-width: var(--container-width-md); /* sizing: readable measure limit */
 
-  /* 표면 안쪽 여백 — 수직 space-sm · 수평 space-md */
+  /* Surface inner padding — vertical space-sm · horizontal space-md */
   padding: var(--space-sm) var(--space-md);
 
   border-radius: var(--radius-lg);
 
-  /* 표면 + 헤어라인 경계 (AI = 무채색 절제) */
+  /* Surface + hairline border (AI = restrained neutral) */
   background-color: var(--surface-base);
   border-style: solid;
   border-width: var(--border-width-sm);
   border-color: var(--border-subtle);
 
-  align-self: flex-start; /* 레이아웃 — AI 발화는 좌측 */
+  align-self: flex-start; /* layout — AI utterances sit on the left */
 }
 
 .message-bubble__author {
@@ -127,10 +136,10 @@
   margin: 0;
   font-size: var(--text-size-md);
   font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-relaxed); /* 긴 글 가독 */
+  line-height: var(--line-height-relaxed); /* readability for long text */
   color: var(--text-default);
-  white-space: pre-wrap; /* 구조값 — 여러 줄·공백 보존 */
-  word-break: break-word; /* 구조값 — 긴 토큰 줄바꿈 */
+  white-space: pre-wrap; /* structural — preserve multiple lines and whitespace */
+  word-break: break-word; /* structural — wrap long tokens */
 }
 
 .message-bubble__meta {
@@ -140,54 +149,54 @@
   color: var(--text-subtle);
 }
 
-/* ---- Variant: applicant — 지원자 본인 발화. accent-subtle 표면, 경계 없음 ---- */
+/* ---- Variant: applicant — the candidate's own utterance. accent-subtle surface, no border ---- */
 .message-bubble--applicant {
   background-color: var(--accent-subtle);
-  border-color: transparent; /* 표면 대비가 헤어라인을 대신 */
-  align-self: flex-end; /* 레이아웃 — 내 발화는 우측 */
+  border-color: transparent; /* surface contrast stands in for the hairline */
+  align-self: flex-end; /* layout — my utterances sit on the right */
 }
 
 /* =========================================================================
- * composer — 하단 입력 + 전송 묶음
- * 입력은 input 프리미티브(.input)를, 전송은 button 프리미티브(.btn)를 재사용.
+ * composer — bottom input + send group
+ * The input reuses the input primitive (.input); send reuses the button primitive (.btn).
  * ========================================================================= */
 .composer {
-  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
+  box-sizing: border-box; /* structural — keep padding from overflowing the width */
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm); /* 힌트·입력·버튼 사이 */
-  width: 100%; /* 구조값 */
+  gap: var(--space-sm); /* between hint, input, and button */
+  width: 100%; /* structural */
   max-width: var(--container-width-lg);
   margin-left: auto;
   margin-right: auto;
 
-  /* 표면 안쪽 여백 — 수직 space-sm · 수평 space-md */
+  /* Surface inner padding — vertical space-sm · horizontal space-md */
   padding: var(--space-sm) var(--space-md);
 
   border-radius: var(--radius-lg);
   background-color: var(--surface-base);
 
-  /* 대화 영역과의 상단 구분 경계 */
+  /* Top boundary separating it from the conversation area */
   border-top-style: solid;
   border-top-width: var(--border-width-sm);
   border-top-color: var(--border-subtle);
 }
 
-/* 입력 필드 + 전송 버튼을 나란히 두는 행 */
+/* Row placing the input field and send button side by side */
 .composer__row {
   display: flex;
   align-items: flex-end;
   gap: var(--space-sm);
 }
 
-/* 입력 필드(.input 재사용)는 남은 폭을 채운다 */
+/* The input field (.input reuse) fills the remaining width */
 .composer__field {
-  flex: 1 1 auto; /* 구조값 */
-  resize: vertical; /* 구조값 — 여러 줄 허용 */
-  min-height: var(--space-2xl); /* 편집 여유 높이 */
+  flex: 1 1 auto; /* structural */
+  resize: vertical; /* structural — allow multiple lines */
+  min-height: var(--space-2xl); /* editing headroom */
 }
 
-/* 보조 안내(입력 힌트·전송 단축키) */
+/* Secondary guidance (input hint, send shortcut) */
 .composer__hint {
   margin: 0;
   font-size: var(--text-size-xs);

@@ -1,10 +1,10 @@
 /*
- * 테스트 부트스트랩 — jest-dom 매처 등록 + 격리 초기화
+ * Test bootstrap — registers jest-dom matchers + isolation reset
  * ---------------------------------------------------------------------------
- * - `@testing-library/jest-dom`으로 `toBeInTheDocument` 등 DOM 매처를 확장한다.
- * - 세션 스토어가 localStorage에 토큰별 세션을 영속하므로, 각 테스트가
- *   깨끗한 상태에서 시작하도록 매 테스트 후 DOM과 localStorage를 비운다
- *   (테스트 간 배정 상태 누수 방지).
+ * - Extends DOM matchers such as `toBeInTheDocument` via `@testing-library/jest-dom`.
+ * - The session store persists per-token sessions in localStorage, so we clear
+ *   the DOM and localStorage after every test to ensure each test starts from
+ *   a clean state (prevents assignment state leaking between tests).
  * ---------------------------------------------------------------------------
  */
 

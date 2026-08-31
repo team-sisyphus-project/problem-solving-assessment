@@ -1,24 +1,25 @@
 /*
- * Modal — 프리미티브 (framework-agnostic)
+ * Modal — primitive (framework-agnostic)
  * ---------------------------------------------------------------------------
  * Spec: components/modal/base.md
- * 화면 위에 떠서 집중 확인/작업을 요구하는 오버레이 다이얼로그.
- * 스크림 + 엘리베이션 그림자로 최상위 표면임을 표현.
- * 모든 디자인 값은 var(--token)만 참조(하드코딩 0).
+ * An overlay dialog floating above the screen to demand a focused
+ * confirmation or task.
+ * Scrim + elevation shadow express that it is the topmost surface.
+ * All design values reference only var(--token) (zero hardcoding).
  *
- * 사용:
+ * Usage:
  *   <div class="modal-overlay">
  *     <div class="modal" role="dialog" aria-modal="true">
- *       <header class="modal__header"><h2 class="modal__title">제목</h2></header>
- *       <div class="modal__body">본문</div>
- *       <footer class="modal__footer"> ….btn 들… </footer>
+ *       <header class="modal__header"><h2 class="modal__title">Title</h2></header>
+ *       <div class="modal__body">Body</div>
+ *       <footer class="modal__footer"> ….btn elements… </footer>
  *     </div>
  *   </div>
- * (열림/닫힘 토글은 JS 로직 — 이 프리미티브의 범위 밖)
+ * (Open/close toggling is JS logic — outside this primitive's scope)
  * ---------------------------------------------------------------------------
  */
 
-/* 오버레이(스크림) — 뒤 배경을 덮어 초점을 모음 */
+/* Overlay (scrim) — covers the background behind to gather focus */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -32,11 +33,11 @@
   background-color: var(--overlay-scrim);
 }
 
-/* 다이얼로그 패널 — 떠 있는 표면 */
+/* Dialog panel — the floating surface */
 .modal {
   box-sizing: border-box;
   width: 100%;
-  max-width: 32rem; /* 레이아웃 폭 제약 (디자인 토큰 범주 아님) */
+  max-width: 32rem; /* layout width constraint (not in the design-token category) */
   display: flex;
   flex-direction: column;
   gap: var(--space-md);

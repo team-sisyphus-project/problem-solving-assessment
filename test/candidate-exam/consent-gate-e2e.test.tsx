@@ -1,19 +1,23 @@
 /*
- * S-1 / M-1·M-2·M-3 — 본인 확인 데이터 열람 동의 게이트 (E2E)
+ * S-1 / M-1·M-2·M-3 — Identity verification data consent-to-review gate (E2E)
  * ---------------------------------------------------------------------------
- * `submission-flow-e2e.test.tsx`와 동일한 방식으로, 프로덕션과 동형인 중첩
- * 라우터(AppShell = 레이아웃 + 단계 자식) 위에서 실제 클릭으로 구동한다.
+ * Driven with real clicks on top of a nested router isomorphic to production
+ * (AppShell = layout + step children), the same way as
+ * `submission-flow-e2e.test.tsx`.
  *
- * 검증 목표(Measure) 대응:
- *   · M-2 — 평가자가 해결 과정 내 입력·산출물까지 열람한다는 안내가 노출된다.
- *   · M-3 — 이 데이터를 LLM 학습 등에 쓰지 않는다는 고지가 (a)안내와 **같은 화면에
- *           동시** 노출된다.
- *   · M-1 — 미동의 상태에서 진행 시도 시 다음 단계(brief)로 넘어가지 못하고
- *           안내가 노출된다(차단 100%). 동의 후에는 진행에 성공한다(진행 100%).
+ * Mapping to the verification goals (Measure):
+ *   · M-2 — the notice that reviewers will review inputs and outputs from the
+ *           solving process is exposed.
+ *   · M-3 — the disclosure that this data will not be used for LLM training
+ *           etc. is exposed **simultaneously on the same screen** as notice (a).
+ *   · M-1 — attempting to proceed without consent does not advance to the next
+ *           step (brief) and shows guidance (100% blocked). After consenting,
+ *           proceeding succeeds (100% progression).
  *
- * 문구는 i18n(strings)에서 직접 읽어 하드코딩 없이 대조하고, 배정 문제 제목은
- * 프로덕션 계약(assignProblem)이 반환하는 값으로 확인해 특정 문자열 결합을 피한다.
- * 이 테스트는 테스트 계층 전용이며 프로덕션 코드를 변경하지 않는다.
+ * Copy is read directly from i18n (strings) and compared without hardcoding,
+ * and the assigned problem title is checked against the value returned by the
+ * production contract (assignProblem) to avoid coupling to specific strings.
+ * This test lives in the test layer only and does not change production code.
  * ---------------------------------------------------------------------------
  */
 
@@ -31,8 +35,9 @@ import { getSession } from "../../src/app/session/store";
 const TOKEN = "consent-gate-e2e-token";
 const verify = strings.screens.verify;
 
-/** 프로덕션과 동형인 중첩 라우트로 렌더한다. verify 인덱스에서 시작하고,
- * 동의 통과 후 brief로 실제 navigate가 일어나므로 brief 라우트도 포함한다. */
+/** Renders on nested routes isomorphic to production. Starts at the verify
+ * index; a real navigate to brief happens after the consent gate passes, so
+ * the brief route is included as well. */
 function renderFlow() {
   return render(
     <MemoryRouter initialEntries={[`/invite/${TOKEN}`]}>
@@ -46,7 +51,7 @@ function renderFlow() {
   );
 }
 
-/** 이름·이메일을 유효하게 채운다(동의는 하지 않는다). */
+/** Fills in a valid name and email (does not consent). */
 function fillIdentity() {
   fireEvent.change(screen.getByLabelText(verify.nameLabel), {
     target: { value: "Jordan Lee" },
@@ -61,22 +66,24 @@ const proceedButton = () =>
 const consentCheckbox = () =>
   screen.getByRole("checkbox", { name: verify.consentCheckboxLabel });
 
-describe("본인 확인 동의 게이트 E2E — 노출·차단·진행 (S-1/M-1·M-2·M-3)", () => {
+describe("Identity verification consent gate E2E — exposure, blocking, progression (S-1/M-1·M-2·M-3)", () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
-  it("동의 문구 (a)열람 안내 + (b)비학습 고지가 체크박스·진행 버튼과 같은 화면에 동시 노출된다 (M-2/M-3)", () => {
+  it("consent statements (a) review notice + (b) no-training disclosure are exposed simultaneously on the same screen as the checkbox and proceed button (M-2/M-3)", () => {
     const { container } = renderFlow();
 
-    // 같은 verify 폼 안에 (a)(b) 두 고지가 함께 실린다(동시 노출).
+    // Both disclosures (a) and (b) are carried together inside the same verify
+    // form (simultaneous exposure).
     const form = container.querySelector("form.verify-form");
     expect(form).not.toBeNull();
     const scoped = within(form as HTMLElement);
     expect(scoped.getByText(verify.consentReview)).toBeInTheDocument();
     expect(scoped.getByText(verify.consentNoTraining)).toBeInTheDocument();
 
-    // 동의 컨트롤(체크박스)과 진행 버튼도 같은 폼 안에 함께 있다.
+    // The consent control (checkbox) and the proceed button are in the same
+    // form too.
     expect(
       scoped.getByRole("checkbox", { name: verify.consentCheckboxLabel }),
     ).toBeInTheDocument();
@@ -85,46 +92,50 @@ describe("본인 확인 동의 게이트 E2E — 노출·차단·진행 (S-1/M-1
     ).toBeInTheDocument();
   });
 
-  it("미동의 상태에서 진행을 시도하면 brief로 넘어가지 못하고 안내가 노출된다 (M-1 차단, 페르소나 C)", () => {
+  it("attempting to proceed without consent does not advance to brief and shows guidance (M-1 blocking, persona C)", () => {
     renderFlow();
     fillIdentity();
 
-    // 기본 상태: 체크 안 됨, 버튼은 비활성 상태를 알린다.
+    // Default state: unchecked, and the button announces its disabled state.
     expect(consentCheckbox()).not.toBeChecked();
     expect(proceedButton()).toHaveAttribute("aria-disabled", "true");
 
-    // 안내는 시도 전에는 떠 있지 않다(불필요한 경고를 미리 띄우지 않는다).
+    // The guidance is not shown before an attempt (no premature warnings).
     expect(screen.queryByText(verify.consentRequired)).not.toBeInTheDocument();
 
-    // 미동의 상태로 진행 시도 — 안내가 뜨고 다음 단계로 넘어가지 않는다.
+    // Attempt to proceed without consent — guidance appears and we do not
+    // advance to the next step.
     fireEvent.click(proceedButton());
 
     expect(screen.getByText(verify.consentRequired)).toBeInTheDocument();
-    // 여전히 본인 확인 폼에 머문다 — 배정 문제(brief) 화면은 나타나지 않는다.
+    // Still on the identity verification form — the assigned problem (brief)
+    // screen does not appear.
     expect(screen.getByLabelText(verify.nameLabel)).toBeInTheDocument();
     const assigned = assignProblem(TOKEN);
     expect(
       screen.queryByRole("heading", { name: assigned.title }),
     ).not.toBeInTheDocument();
-    // 신원도 아직 세션에 저장되지 않았다(게이트 통과 전).
+    // The identity has not been saved to the session yet either (gate not passed).
     expect(getSession(TOKEN)?.candidate).toBeNull();
   });
 
-  it("동의 체크 후 진행하면 안내가 사라지고 다음 단계(brief)로 넘어간다 (M-1 진행)", () => {
+  it("after checking consent, proceeding clears the guidance and advances to the next step (brief) (M-1 progression)", () => {
     renderFlow();
     fillIdentity();
 
-    // 먼저 미동의로 막히고 안내가 떠 있는 상태를 만든다.
+    // First put the screen into the blocked-without-consent state with the
+    // guidance visible.
     fireEvent.click(proceedButton());
     expect(screen.getByText(verify.consentRequired)).toBeInTheDocument();
 
-    // 동의하면 비활성 표시와 안내가 함께 사라진다.
+    // Consenting removes both the disabled indication and the guidance.
     fireEvent.click(consentCheckbox());
     expect(consentCheckbox()).toBeChecked();
     expect(proceedButton()).not.toHaveAttribute("aria-disabled");
     expect(screen.queryByText(verify.consentRequired)).not.toBeInTheDocument();
 
-    // 진행 — 배정 문제(brief)로 전진하고 본인 확인 폼은 사라진다.
+    // Proceed — advances to the assigned problem (brief) and the identity
+    // verification form disappears.
     fireEvent.click(proceedButton());
 
     const assigned = assignProblem(TOKEN);
@@ -132,7 +143,7 @@ describe("본인 확인 동의 게이트 E2E — 노출·차단·진행 (S-1/M-1
       screen.getByRole("heading", { name: assigned.title }),
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(verify.nameLabel)).not.toBeInTheDocument();
-    // 신원이 세션에 저장되었다.
+    // The identity has been saved to the session.
     expect(getSession(TOKEN)?.candidate).toMatchObject({
       name: "Jordan Lee",
       email: "jordan@example.com",

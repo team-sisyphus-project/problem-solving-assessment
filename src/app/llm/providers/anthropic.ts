@@ -1,23 +1,26 @@
 /*
- * Anthropic(Claude) 어댑터 — Messages REST, 브라우저 직접 호출
+ * Anthropic (Claude) adapter — Messages REST, called directly from the browser
  * ---------------------------------------------------------------------------
- * claude-api 스킬 준수:
- *   - 엔드포인트 POST /v1/messages, 모델 claude-opus-4-8(기본).
- *   - 헤더: x-api-key, anthropic-version, content-type. 브라우저에서 직접 부르므로
- *     `anthropic-dangerous-direct-browser-access: true`가 필요하다(CORS 허용).
- *   - opus-4-8은 adaptive thinking만 지원하나 단순 채팅이므로 thinking 파라미터를
- *     생략한다(생략 시 thinking 없이 동작). budget_tokens/temperature 등은 보내면
- *     400이므로 넣지 않는다.
- *   - 응답 content[]의 text 블록만 이어 붙인다. refusal(빈 content) 등은 에러.
+ * Follows the claude-api skill:
+ *   - Endpoint POST /v1/messages, model claude-opus-4-8 (default).
+ *   - Headers: x-api-key, anthropic-version, content-type. Since the call is
+ *     made directly from the browser,
+ *     `anthropic-dangerous-direct-browser-access: true` is required (enables CORS).
+ *   - opus-4-8 supports adaptive thinking only, but this is simple chat, so
+ *     the thinking parameter is omitted (omitting it runs without thinking).
+ *     budget_tokens/temperature and the like return 400 if sent, so they are
+ *     left out.
+ *   - Only the text blocks in the response content[] are concatenated.
+ *     Refusal (empty content) and the like are errors.
  *
- * apiKey는 x-api-key 헤더로만 전달, 저장·로그 금지.
+ * apiKey travels only in the x-api-key header; storing or logging it is forbidden.
  * ---------------------------------------------------------------------------
  */
 
 import { postJson } from "../http";
 import { LlmError, type ChatMessage, type ProviderAdapter } from "../types";
 
-/** 구현 설정값(디자인 토큰 아님) */
+/** Implementation settings (not design tokens) */
 const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-opus-4-8";
 const ANTHROPIC_VERSION = "2023-06-01";

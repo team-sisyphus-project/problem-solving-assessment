@@ -1,123 +1,160 @@
-# 문제해결력 평가 — 지원자 응시 화면 (골격)
+# Problem-Solving Assessment — Candidate Exam Screens (Skeleton)
 
-AI 시대 문제해결력 평가 채용 SaaS의 **지원자용 응시 화면** 프런트엔드다. 이
-단계에서는 응시 흐름의 레이아웃 셸과 화면 전환 골격까지 배선되어 있다. 실제
-채팅/문제/채점, LLM 키 연동, 고객사 화면은 후속 카드에서 진행한다.
+This is the frontend for the **candidate-facing exam screens** of a hiring SaaS
+for problem-solving assessment in the AI era. At this stage, the layout shell of
+the exam flow and the screen-transition skeleton are wired up. The actual
+chat/problems/scoring, LLM key integration, and client-company screens will be
+handled in follow-up cards.
 
-## 언어 정책 — 영어 전용
+## Language Policy — English Only
 
-이 제품의 사용자 대면 언어는 **영어 하나뿐이다(한국어 미지원)**. 화면 문구는
-`src/app/i18n/locales/en.ts` 한 파일에만 존재하고, i18n의 `defaultLocale`도 `en`이다.
-목업 문제 데이터(`src/app/session/problems.ts`)처럼 사전 밖의 도메인 콘텐츠도 영어로 둔다.
-코드 주석만 팀 내부 문서로서 한국어를 유지한다.
+This product's user-facing language is **English only (Korean is not supported)**.
+All screen copy lives in a single file, `src/app/i18n/locales/en.ts`, and the
+i18n `defaultLocale` is also `en`. Domain content outside the dictionary, such
+as the mock problem data (`src/app/session/problems.ts`), is kept in English as
+well. Only code comments remain in Korean, as internal team documentation.
 
-회귀는 `test/candidate-exam/english-only.test.ts`가 막는다 — 사전과 목업 문제를 전부 훑어
-한글이 하나라도 섞이면 실패한다.
+Regressions are prevented by `test/candidate-exam/english-only.test.ts` — it
+sweeps the entire dictionary and mock problems and fails if even one Korean
+character slips in.
 
-## 스택
+## Stack
 
-- Vite + React + TypeScript (정적 빌드 → 단일 포트로 서빙되는 SPA)
-- 클라이언트 라우팅: `react-router-dom` (HashRouter — 정적 배포에서도 딥링크가
-  끊기지 않도록 서버 fallback 설정 없이 동작)
-- 3D: `three` — 웰컴 인트로의 유리 오브젝트에만 쓰인다. 동적 import로 별도
-  청크에 격리되어 흐름 4단계 화면에서는 로드되지 않는다.
+- Vite + React + TypeScript (static build → SPA served on a single port)
+- Client-side routing: `react-router-dom` (HashRouter — deep links keep working
+  even on static deployments, without any server fallback configuration)
+- 3D: `three` — used only for the glass object in the welcome intro. It is
+  isolated into a separate chunk via dynamic import, so it is never loaded on
+  the four flow-step screens.
 
-## 웰컴 인트로 (흐름 앞단 · 단계 아님)
+## Welcome Intro (Precedes the Flow — Not a Step)
 
-초대 링크의 토큰 인덱스(`/#/invite/{token}`)는 본인 확인 폼이 아니라 **웰컴
-인트로** 한 장이다. 하늘·구름·언덕 배경 위에 유리 3D 오브젝트를 얹고, eyebrow →
-타이틀 → 서브카피 → 단일 CTA만 둔다. CTA를 누르면 흐름 첫 단계(본인 확인)로
-전진한다.
+The token index of the invite link (`/#/invite/{token}`) is not the identity
+verification form but a single **welcome intro** page. A glass 3D object sits on
+a sky/clouds/hills background, with only an eyebrow → title → subcopy → single
+CTA. Pressing the CTA advances to the first step of the flow (identity
+verification).
 
-- 흐름 단계가 아니므로 `FLOW_STEPS`·단계 표시자에 나타나지 않고, 셸(AppShell)
-  **밖**에서 전면 히어로로 렌더된다. 기존 4단계 구조는 그대로다.
-- 배경(하늘·뭉게구름·능선)은 `screens/welcome/skyPainter.ts`의 페인터 한 벌이 그린다.
-  같은 그림을 WebGL 씬 배경과 DOM 캔버스가 나눠 쓰기 때문이다 — 유리 오브젝트가
-  하늘을 **굴절**시키려면 배경이 씬 안에 있어야 한다.
-- 카피는 오브젝트 **위에 겹쳐** 가운데 정렬된다. 오브젝트를 옆이나 아래로 밀어내지
-  않기 때문에 같은 크기라도 화면을 압도하지 않고 배경 오브제로 읽힌다.
-- CTA는 `.btn--hero` — 입체 알약 형태로 아주 느리게 기울며 떠 있다. 흐름 4단계의
-  버튼은 같은 알약 형태를 쓰되 움직이지 않는다(주요 초점은 화면당 하나).
-- `prefers-reduced-motion: reduce` · WebGL 미지원 · three 청크 로드 실패 시에는
-  같은 카피·레이아웃을 유지한 채 오브젝트만 정적 SVG로 대체된다.
-- 이미 제출된 토큰으로 재진입하면 인트로를 건너뛰고 첫 단계로 보내져 셸의 잠금
-  안내가 뜬다.
-- 히어로 전용 시각값(하늘·구름·언덕·유리 틴트·표제 크기)은 `tokens.css` 하단의
-  **신규 토큰 후보** 블록에 격리되어 있다 — Design Spec 등록 전 임시 자리다.
+- Because it is not a flow step, it does not appear in `FLOW_STEPS` or the step
+  indicator, and it renders as a full-bleed hero **outside** the shell
+  (AppShell). The existing four-step structure is unchanged.
+- The background (sky, cumulus clouds, ridgeline) is drawn by a single set of
+  painters in `screens/welcome/skyPainter.ts`. That is because the WebGL scene
+  background and the DOM canvas share the same drawing — for the glass object to
+  **refract** the sky, the background has to live inside the scene.
+- The copy is **overlaid on top of** the object, center-aligned. Because it does
+  not push the object aside or below, the object reads as a background objet
+  rather than dominating the screen even at the same size.
+- The CTA is `.btn--hero` — a dimensional pill shape that floats, tilting very
+  slowly. Buttons in the four flow steps use the same pill shape but do not move
+  (one primary focus per screen).
+- Under `prefers-reduced-motion: reduce`, when WebGL is unsupported, or when the
+  three chunk fails to load, only the object is replaced with a static SVG while
+  the same copy and layout are kept.
+- Re-entering with a token that has already been submitted skips the intro and
+  sends the candidate to the first step, where the shell's lock notice appears.
+- Hero-only visual values (sky, clouds, hills, glass tint, headline size) are
+  isolated in the **new-token candidates** block at the bottom of `tokens.css` —
+  a temporary home until they are registered in the Design Spec.
 
-## 응시 흐름 (4단계 · 초대 토큰 스코프)
+## Exam Flow (4 Steps, Scoped to the Invite Token)
 
-모든 흐름은 초대 링크 `/#/invite/{token}` 아래에 중첩된다. 셸의 헤더 단계
-표시자와 라우터가 아래 선형 흐름을 공유하며, 회원가입/로그인/LLM 연결 단계는
-없다.
+The entire flow is nested under the invite link `/#/invite/{token}`. The shell's
+header step indicator and the router share the linear flow below; there are no
+sign-up/login/LLM-connection steps.
 
-1. **본인 확인** (`/#/invite/{token}/verify`) — 2단 구성. 좌측은 배정 문제를 훑어
-   내려가는 스캔 연출(`screens/verify/ProblemScan`), 우측이 이름·이메일 입력이다.
-2. **문제 안내** (`/#/invite/{token}/brief`) — 배정된 문제 1건 안내
-3. **문제 풀이** (`/#/invite/{token}/solve`) — 화면 **안에서** 두 단계로 나뉜다.
-   - 1단계 `connect` : 무엇을 보는 평가인지 설명하고 본인 AI를 연결한다(BYOP).
-     건너뛸 수 있지만, 건너뛰면 대화를 시작할 수 없다(그 사실을 버튼 옆에 밝힌다).
-   - 2단계 `chat` : 좌측은 경과 시간 + 흘러가는 구름, 우측은 대화. 배정 문제는
-     대화 위에 고정되어(`ProblemPin`) 접었다 폈다 할 수 있고, 접어도 제목은 남는다.
-   - 이미 대화가 있는 세션으로 되돌아오면 1단계를 건너뛰고 바로 대화로 간다.
-   - 경과 시간은 **제한 시간이 아니다**(카운트다운 아님). 기준점은 세션의
-     `startedAt`이라 새로고침해도 0으로 되돌아가지 않는다.
-4. **제출 완료** (`/#/invite/{token}/complete`) — 흐름 종료 상태
+1. **Identity verification** (`/#/invite/{token}/verify`) — two-column layout.
+   The left side is a scan effect that sweeps down through the assigned problems
+   (`screens/verify/ProblemScan`); the right side is the name/email input.
+2. **Problem brief** (`/#/invite/{token}/brief`) — introduces the single
+   assigned problem
+3. **Problem solving** (`/#/invite/{token}/solve`) — split into two phases
+   **within** the screen.
+   - Phase 1 `connect`: explains what the assessment looks at and connects the
+     candidate's own AI (BYOP). It can be skipped, but skipping means the
+     conversation cannot be started (that fact is stated next to the button).
+   - Phase 2 `chat`: the left side shows elapsed time plus drifting clouds; the
+     right side is the conversation. The assigned problem is pinned above the
+     conversation (`ProblemPin`) and can be collapsed/expanded; the title
+     remains even when collapsed.
+   - Returning to a session that already has a conversation skips Phase 1 and
+     goes straight to the chat.
+   - Elapsed time is **not a time limit** (not a countdown). Its reference point
+     is the session's `startedAt`, so it does not reset to zero on refresh.
+4. **Submission complete** (`/#/invite/{token}/complete`) — the flow's terminal
+   state
 
-### 제출 후 재진입 — 잠그지 않고 묻는다
+### Re-entry After Submission — Ask Instead of Locking
 
-예전에는 제출한 링크로 다시 들어오면 "이미 제출되었습니다"로 흐름을 **잠갔다**.
-지금은 막지 않고 지난 제출 안내(`screens/PreviousSubmission`)를 띄워 선택지를 준다.
+Previously, re-entering via a submitted link **locked** the flow with an
+"Already submitted" message. Now, instead of blocking, we show the previous
+submission notice (`screens/PreviousSubmission`) and offer choices.
 
-- 무엇을 언제 냈는지 요약으로 보여 주고, 펼치면 그때의 대화 로그를 그대로 되읽을 수 있다.
-- "새 문제로 시작"을 고르면 회차(`attempt`)가 올라가 **다른 문제**가 배정되고 대화가 비워진다.
-- **지난 제출은 지워지지 않는다.** 세션의 `history`로 옮겨 둔다 — 제출은 되돌릴 수 없다고
-  약속했고 담당자가 검토할 평가 자료이기도 하므로, 새 시도가 그것을 덮어쓰면 안 된다.
-- 헤더의 브랜드 마크는 처음(웰컴)으로 가는 링크다. 제출을 마친 뒤에도 막지 않는다 —
-  지원자가 언제든 첫 화면으로 나올 수 있어야 갇힌 느낌이 들지 않는다.
-- 제출 직후 목적지인 `/complete`만 예외로 그대로 도달한다.
+- It shows a summary of what was submitted and when; expanding it lets the
+  candidate re-read the conversation log from that time as-is.
+- Choosing "Start with a new problem" increments the attempt counter
+  (`attempt`), assigns a **different problem**, and clears the conversation.
+- **The previous submission is never deleted.** It is moved to the session's
+  `history` — we promised that submissions are irreversible, and they are also
+  assessment material the reviewer will examine, so a new attempt must not
+  overwrite it.
+- The brand mark in the header is a link back to the start (welcome). It is not
+  blocked even after submission — candidates should always be able to return to
+  the first screen so they never feel trapped.
+- The only exception is `/complete`, the destination right after submission,
+  which remains directly reachable.
 
-> 이 개정으로 한 초대 링크에 여러 번 응시할 수 있게 됐다(원래 SC-4/M-5는 1회 제한).
-> 부정 응시를 막아야 한다면 서버에서 회차를 제한하는 쪽으로 되돌려야 한다.
+> With this revision, a single invite link allows multiple attempts (originally
+> SC-4/M-5 limited it to one). If cheating must be prevented, revert to limiting
+> attempts on the server side.
 
-- 4단계 화면도 인트로와 같은 하늘을 **잔잔한 변형(calm)** 으로 깐다. 화면 아래쪽에만
-  옅게 스미고 콘텐츠는 흰 카드(`.flow-panel` · `.problem-brief` · `.conversation`) 위에
-  올라가므로, 배경이 생겨도 폼·대화의 가독성은 그대로다.
-- 토큰 세션(이름/이메일·배정 문제·대화 로그·제출 시각)은 브라우저 localStorage에
-  토큰별로 저장된다(백엔드 연동은 후속 카드).
-- 토큰이 없는 루트(`/`)나 알 수 없는 경로는 데모 토큰의 웰컴 인트로
-  (`/#/invite/demo-2f9c4a`)로 이동한다(미리보기 연속성). 토큰 내부의 알 수 없는
-  하위 경로는 인트로가 아니라 해당 토큰의 첫 단계로 이동한다 — 흐름 중간
-  딥링크가 처음으로 튕기지 않게 하기 위해서다(딥링크 fallback).
+- The four flow-step screens also lay down the same sky as the intro, in a
+  **calm variant**. It seeps in faintly only at the bottom of the screen, and
+  the content sits on white cards (`.flow-panel`, `.problem-brief`,
+  `.conversation`), so the readability of forms and conversations is unaffected
+  by the background.
+- The token session (name/email, assigned problem, conversation log, submission
+  time) is stored per token in the browser's localStorage (backend integration
+  is a follow-up card).
+- The token-less root (`/`) and unknown paths redirect to the demo token's
+  welcome intro (`/#/invite/demo-2f9c4a`) (preview continuity). Unknown
+  sub-paths within a token redirect to that token's first step rather than the
+  intro — so that mid-flow deep links do not bounce back to the beginning
+  (deep-link fallback).
 
-## 그린필드 로컬 실행
+## Greenfield Local Run
 
-데이터베이스·마이그레이션·시드는 없다(프런트엔드 정적 SPA). 클린 상태에서:
+There is no database, no migrations, no seeds (static frontend SPA). From a
+clean state:
 
 ```bash
-npm install     # 의존성 설치
-npm run dev     # 개발 서버 (PORT 환경변수 사용, 기본 5173)
+npm install     # install dependencies
+npm run dev     # dev server (uses the PORT env var, default 5173)
 ```
 
-프로덕션 미리보기:
+Production preview:
 
 ```bash
-npm run build   # 타입체크 + 정적 빌드 → dist/
-npm run preview # dist/ 를 PORT(기본 5173)로 서빙
+npm run build   # typecheck + static build → dist/
+npm run preview # serve dist/ on PORT (default 5173)
 ```
 
-- 포트는 `PORT` 환경변수를 우선 사용한다(하드코딩 없음).
-- 더미 계정/시드 없음(인증·데이터 계층은 이번 범위 밖).
+- The port comes from the `PORT` environment variable first (no hardcoding).
+- No dummy accounts/seeds (auth and data layers are out of scope for now).
 
-## 코드 배치
+## Code Layout
 
-- `src/styles/tokens.css` — 디자인 토큰(단일 소스). 화면·컴포넌트는 raw 값이 아닌
-  토큰만 참조한다.
-- `src/styles/components/` — 공용 프리미티브 6종(버튼·인풋·모달·빈상태·로딩·토스트).
-- `src/app/screens/welcome/` — 웰컴 인트로 전용 파츠(유리 3D 오브젝트 · 정적 대체
-  SVG · 배경 일러스트). 스타일은 `src/app/styles/welcome.css`.
-- `src/app/` — 레이아웃 셸(`shell/`), 흐름 화면(`screens/`), 라우터(`router.tsx`),
-  흐름 정의(`flow.ts`), 초대 세션 스토어(`session/` — localStorage 토큰별 저장 +
-  목업 문제 배정), UI 문자열(`i18n/`).
+- `src/styles/tokens.css` — design tokens (single source). Screens and
+  components reference tokens only, never raw values.
+- `src/styles/components/` — the 6 shared primitives (button, input, modal,
+  empty state, loading, toast).
+- `src/app/screens/welcome/` — welcome-intro-only parts (glass 3D object,
+  static fallback SVG, background illustration). Styles live in
+  `src/app/styles/welcome.css`.
+- `src/app/` — layout shell (`shell/`), flow screens (`screens/`), router
+  (`router.tsx`), flow definition (`flow.ts`), invite session store (`session/`
+  — per-token localStorage persistence + mock problem assignment), UI strings
+  (`i18n/`).
 
-디자인 원칙·톤은 루트 `DESIGN.md`, 시맨틱 값·구조는 Design Spec을 정본으로 삼는다.
+Design principles and tone are governed by the root `DESIGN.md`; semantic
+values and structure treat the Design Spec as the source of truth.

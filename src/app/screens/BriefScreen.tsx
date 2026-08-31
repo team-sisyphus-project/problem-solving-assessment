@@ -1,19 +1,23 @@
 /*
- * BriefScreen — 흐름 2단계: 문제 안내 (`/invite/:token/brief`)
+ * BriefScreen — flow step 2: problem brief (`/invite/:token/brief`)
  * ---------------------------------------------------------------------------
  * Spec:
- *   components/problem-brief/base.md  (배정 문제 1건을 위계에 맞춰 제시하는 카드)
- *   foundations/i18n-strings.md       (screens.brief 네임스페이스)
+ *   components/problem-brief/base.md  (a card presenting the single assigned problem with proper hierarchy)
+ *   foundations/i18n-strings.md       (screens.brief namespace)
  *
- * 본인 확인을 마친 지원자에게 **배정된 문제 1건**의 제목·설명을 시각 위계
- * (eyebrow→제목→설명)에 맞춰 안내한다(SC-2/M-2). 배정 자체는 세션 스토어가
- * 토큰 첫 접근 시점에 결정적으로 확정하며(`getOrCreateSession`→`assignProblem`),
- * 이 화면은 그 세션이 보관한 **단 1건**(`session.problem`)만 렌더한다. 다른
- * 지원자의 문제는 토큰 스코프 밖이라 접근 경로 자체가 없다(미노출 보장).
+ * Presents the title and description of the **single assigned problem** to
+ * the candidate who has completed identity verification, following the visual
+ * hierarchy (eyebrow → title → description) (SC-2/M-2). The assignment itself
+ * is fixed deterministically by the session store at the first access to the
+ * token (`getOrCreateSession` → `assignProblem`), and this screen renders
+ * only the **single problem** that session holds (`session.problem`). Other
+ * candidates' problems are outside the token scope, so there is no access
+ * path to them at all (non-exposure guaranteed).
  *
- * 문제 제목/설명은 도메인 데이터(session/problems)이고, 화면 크롬(eyebrow·안내·
- * 액션)만 i18n 키(screens.brief)로 관리한다. 하드코딩 스타일 0 — 모든 시각
- * 표현은 프리미티브(.problem-brief/.btn)와 screens.css의 토큰 클래스에 의존한다.
+ * The problem title/description is domain data (session/problems); only the
+ * screen chrome (eyebrow, guide, actions) is managed via i18n keys
+ * (screens.brief). Zero hardcoded styles — every visual detail depends on the
+ * primitives (.problem-brief/.btn) and the token classes in screens.css.
  * ---------------------------------------------------------------------------
  */
 
@@ -29,7 +33,8 @@ export function BriefScreen() {
   const { token = "" } = useParams();
   const s = strings.screens.brief;
 
-  // 토큰 세션이 배정 문제의 원본 — 여기서는 배정된 1건만 읽어 표시한다(M-2).
+  // The token session is the source of the assigned problem — here we only
+  // read and display that single assignment (M-2).
   const { problem } = getOrCreateSession(token);
 
   return (

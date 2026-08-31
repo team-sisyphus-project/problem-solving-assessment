@@ -1,58 +1,63 @@
 /*
- * i18n 배선 — 로케일 레지스트리 · 접근자 (Headless)
+ * i18n wiring — locale registry · accessors (headless)
  * ---------------------------------------------------------------------------
  * Spec: foundations/i18n-strings.md
  *
- * 사용자 대면 문자열을 로케일 키 파일(`locales/<locale>.ts`)로 관리하는 최소
- * 배선이다. 현재 로케일은 `en` 하나뿐이지만, 새 로케일 추가 = `en`과 동형(같은
- * 키 집합)인 사전 파일 추가 + `locales`에 등록으로 확장된다. i18n 라이브러리·
- * 번들 로딩·전환 UI는 이번 범위 밖(규약이 그 골격만 고정).
+ * Minimal wiring that manages user-facing strings in locale key files
+ * (`locales/<locale>.ts`). `en` is currently the only locale, but adding a
+ * new one just means adding a dictionary file isomorphic to `en` (same key
+ * set) and registering it in `locales`. An i18n library, bundle loading, and
+ * a switching UI are out of scope for now (the convention only pins down the
+ * skeleton).
  *
- *   - `defaultLocale` : 기준/폴백 로케일(= en)
- *   - `locales`       : 로케일 코드 → 사전 레지스트리
- *   - `Strings`       : en 사전에서 파생한 정본(canonical) 키 타입
- *   - `getStrings(l)` : 로케일의 사전 전체를 반환(없으면 defaultLocale 폴백)
- *   - `t(l)`          : `getStrings`의 짧은 별칭
- *   - `strings`       : `getStrings(defaultLocale)` — 소비처 기본 진입점
+ *   - `defaultLocale` : the base/fallback locale (= en)
+ *   - `locales`       : locale code → dictionary registry
+ *   - `Strings`       : canonical key type derived from the en dictionary
+ *   - `getStrings(l)` : returns a locale's full dictionary (falls back to defaultLocale if missing)
+ *   - `t(l)`          : short alias for `getStrings`
+ *   - `strings`       : `getStrings(defaultLocale)` — the default entry point for consumers
  * ---------------------------------------------------------------------------
  */
 
 import { en } from "./locales/en";
 
-/** 기준(정본) 로케일 — 이 제품의 유일한 사용자 대면 언어(한국어 미지원) */
+/** Base (canonical) locale — this product's only user-facing language (Korean is not supported) */
 export const defaultLocale = "en" as const;
 
 /**
- * 로케일 레지스트리 — 코드 → 사전.
- * 새 로케일은 `en`과 동일한 키 집합을 가진 파일을 만들어 여기에 등록한다.
+ * Locale registry — code → dictionary.
+ * To add a new locale, create a file with the exact same key set as `en` and
+ * register it here.
  */
 export const locales = {
   en,
 } as const;
 
-/** 사용 가능한 로케일 코드 */
+/** Available locale codes */
 export type Locale = keyof typeof locales;
 
 /**
- * 정본 키 타입 — `en` 사전 구조에서 파생한다. 모든 로케일은 이 형태를 만족해야
- * 하므로(동형 강제) 새 사전 파일에 이 타입을 부여하면 키 누락/오타가 컴파일
- * 시점에 잡힌다.
+ * Canonical key type — derived from the `en` dictionary structure. Every
+ * locale must satisfy this shape (isomorphism is enforced), so annotating a
+ * new dictionary file with this type catches missing or misspelled keys at
+ * compile time.
  */
 export type Strings = typeof en;
 
 /**
- * 로케일 사전 전체를 반환한다. 등록되지 않은 로케일이면 `defaultLocale`로
- * 폴백한다(키 누락 폴백의 최소 형태).
+ * Returns a locale's full dictionary. Falls back to `defaultLocale` for
+ * unregistered locales (the minimal form of missing-key fallback).
  */
 export function getStrings(locale: Locale = defaultLocale): Strings {
   return locales[locale] ?? locales[defaultLocale];
 }
 
-/** `getStrings`의 짧은 별칭 — 소비처에서 로케일 사전 접근용 */
+/** Short alias for `getStrings` — for consumers accessing a locale dictionary */
 export const t = getStrings;
 
 /**
- * 기본 로케일 사전에 대한 바인딩 — 로케일 전환 UI가 없는 현재, 화면·셸·흐름의
- * 기본 진입점이다. 문구는 반드시 이 키를 통해 참조하고 리터럴을 직접 쓰지 않는다.
+ * Binding to the default locale dictionary — with no locale-switching UI
+ * today, this is the default entry point for screens, shell, and flow. Copy
+ * must always be referenced through these keys; never write literals directly.
  */
 export const strings = getStrings(defaultLocale);

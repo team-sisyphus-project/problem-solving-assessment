@@ -1,21 +1,26 @@
 /*
- * skyPainter — 하늘 배경(그라디언트 · 뭉게구름 · 능선)을 그리는 단일 페인터
+ * skyPainter — the single painter that draws the sky backdrop (gradient · cumulus clouds · ridgelines)
  * ---------------------------------------------------------------------------
- * Spec: 웰컴 인트로 — 임팩트 3D 버전(A안) · "3D 오브젝트 + 배경 일러스트"
+ * Spec: Welcome intro — impact 3D version (option A) · "3D object + background illustration"
  *
- * 같은 그림을 두 곳에서 쓴다. 그래서 그리는 코드를 한 벌만 둔다.
- *   1. WebGL 씬의 `scene.background` 텍스처 — 유리 오브젝트가 하늘과 구름을
- *      **굴절**시켜야 하므로 배경이 씬 안에 있어야 한다. CSS로 깔면 굴절 대상이
- *      되지 못해 오브젝트가 거의 사라진다.
- *   2. DOM의 2D 캔버스(SkyBackdrop) — 3D가 없는 환경(모션 축소·WebGL 미지원)의
- *      대체 배경이자, 흐름 4단계 화면이 인트로와 같은 세계를 공유하기 위한 배경.
+ * The same painting is used in two places, so the drawing code exists in
+ * exactly one copy.
+ *   1. The WebGL scene's `scene.background` texture — the glass object must
+ *      **refract** the sky and clouds, so the backdrop has to live inside the
+ *      scene. Laid down as CSS it cannot be a refraction target and the
+ *      object all but disappears.
+ *   2. The DOM's 2D canvas (SkyBackdrop) — the fallback backdrop for
+ *      environments without 3D (reduced motion, no WebGL), and the backdrop
+ *      through which the four flow-step screens share the same world as the
+ *      intro.
  *
- * 색은 전부 tokens.css의 `--hero-*` 후보 토큰에서 읽는다(하드코딩 0). 도형의
- * 좌표·반지름은 정규화(0~1) 기하값이라 토큰의 대상이 아니다.
+ * Colors are all read from the `--hero-*` candidate tokens in tokens.css
+ * (zero hardcoding). The shapes' coordinates and radii are normalized (0–1)
+ * geometry values, not subject to tokens.
  * ---------------------------------------------------------------------------
  */
 
-/** 페인터가 쓰는 색 묶음 — 전부 토큰에서 읽어 채운다 */
+/** The set of colors the painter uses — all filled in by reading tokens */
 export interface SkyPalette {
   skyTop: string;
   skyMid: string;
@@ -39,8 +44,9 @@ const TOKEN_NAMES: Record<keyof SkyPalette, string> = {
 };
 
 /**
- * tokens.css에서 하늘 팔레트를 읽는다. 토큰이 하나라도 비면 예외를 던져
- * 호출부가 그리기를 포기하게 한다 — 원시 색이 코드로 새어 들어오지 않게 하는 장치.
+ * Reads the sky palette from tokens.css. If even one token is empty, an
+ * exception is thrown so the caller abandons drawing — a mechanism keeping
+ * raw colors from leaking into the code.
  */
 export function readSkyPalette(): SkyPalette {
   const rootStyle = getComputedStyle(document.documentElement);
@@ -55,8 +61,9 @@ export function readSkyPalette(): SkyPalette {
 }
 
 /**
- * `#rrggbb` 토큰에 투명도를 입힌다. 토큰 **값을 바꾸는** 포맷 변환이 아니라,
- * 장식 레이어를 겹치기 위해 런타임에 알파만 파생하는 것이다(원본은 tokens.css).
+ * Applies transparency to a `#rrggbb` token. This is not a format conversion
+ * that **changes the token's value** — it only derives an alpha at runtime to
+ * layer decorative elements (the source of truth remains tokens.css).
  */
 function withAlpha(hex: string, alpha: number): string {
   const clean = hex.replace("#", "");
@@ -73,21 +80,22 @@ function withAlpha(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** 뭉게구름 1덩이 — 정규화 좌표(화면 폭·높이 대비)와 크기 */
+/** One cumulus cloud — normalized coordinates (relative to screen width/height) and size */
 interface CloudSpec {
-  /** 구름 중심 x (0~1, 화면 폭 대비) */
+  /** Cloud center x (0–1, relative to screen width) */
   x: number;
-  /** 구름 중심 y (0~1, 화면 높이 대비) */
+  /** Cloud center y (0–1, relative to screen height) */
   y: number;
-  /** 구름 폭 (0~1, 화면 폭 대비) */
+  /** Cloud width (0–1, relative to screen width) */
   w: number;
-  /** 불투명도 — 멀리 있는 구름일수록 옅게 */
+  /** Opacity — the farther the cloud, the fainter */
   alpha: number;
 }
 
 /**
- * 히어로의 구름 배치 — 참고 영상처럼 화면 좌우와 아래를 두르는 띠를 이루되,
- * 정중앙(오브젝트와 카피가 겹쳐 놓이는 자리)은 비워 둔다.
+ * The hero's cloud arrangement — like the reference video, forming a band
+ * around the sides and bottom of the screen, while the very center (where the
+ * object and copy overlap) is left empty.
  */
 const HERO_CLOUDS: readonly CloudSpec[] = [
   { x: 0.04, y: 0.52, w: 0.19, alpha: 0.9 },
@@ -102,7 +110,7 @@ const HERO_CLOUDS: readonly CloudSpec[] = [
   { x: 0.73, y: 0.42, w: 0.06, alpha: 0.28 },
 ];
 
-/** 흐름 4단계 화면의 잔잔한 배치 — 바닥 근처에만 옅게 깔린다 */
+/** The calm arrangement for the four flow-step screens — laid faintly near the bottom only */
 const CALM_CLOUDS: readonly CloudSpec[] = [
   { x: 0.1, y: 0.84, w: 0.16, alpha: 0.7 },
   { x: 0.88, y: 0.82, w: 0.15, alpha: 0.7 },
@@ -110,9 +118,10 @@ const CALM_CLOUDS: readonly CloudSpec[] = [
 ];
 
 /**
- * 뭉게구름 실루엣 — 겹친 원으로 만든 정규화 템플릿 3종. 모든 구름이 같은 모양이면
- * 벽지처럼 보이므로, 인덱스로 돌려 가며 실루엣을 다르게 준다.
- * 각 원은 [중심 x, 중심 y, 반지름]이며 구름 폭(=1.0) 기준이다.
+ * Cumulus silhouettes — three normalized templates made of overlapping
+ * circles. If every cloud had the same shape it would look like wallpaper, so
+ * the silhouettes are varied by cycling through them by index.
+ * Each circle is [center x, center y, radius] relative to the cloud width (=1.0).
  */
 const CLOUD_SHAPES: readonly (readonly [number, number, number][])[] = [
   [
@@ -145,8 +154,9 @@ function drawCloud(
   palette: SkyPalette,
 ) {
   /*
-   * 구름 크기의 기준 길이. 폭만 쓰면 세로로 긴 화면(모바일)에서 구름이 잘게
-   * 흩어져 무늬처럼 보이므로, 높이도 함께 본 값을 기준으로 삼는다.
+   * The reference length for cloud size. Using width alone would scatter the
+   * clouds into a fine pattern on tall screens (mobile), so the reference
+   * also takes the height into account.
    */
   const scale = Math.max(w, h * 0.9);
   const cw = spec.w * scale;
@@ -158,8 +168,9 @@ function drawCloud(
   gradient.addColorStop(1, withAlpha(palette.cloudShade, spec.alpha));
 
   ctx.save();
-  // 겹친 원의 이음매를 지우는 아주 약한 블러. 미지원 브라우저에서는 무시되고
-  // 윤곽만 조금 또렷해질 뿐이라 그림이 깨지지 않는다(구현 설정값).
+  // A very slight blur that erases the seams between overlapping circles. In
+  // unsupported browsers it is ignored and the outlines just look a bit
+  // crisper — the painting does not break (implementation setting).
   ctx.filter = `blur(${Math.max(1, cw * 0.012)}px)`;
   ctx.fillStyle = gradient;
   ctx.beginPath();
@@ -167,15 +178,16 @@ function drawCloud(
     ctx.moveTo(cx + (dx + r) * cw, cy + dy * cw);
     ctx.arc(cx + dx * cw, cy + dy * cw, r * cw, 0, Math.PI * 2);
   }
-  // 평평한 바닥 — 뭉게구름 특유의 수평 밑면
+  // Flat bottom — the horizontal underside characteristic of cumulus clouds
   ctx.rect(cx - cw * 0.44, cy, cw * 0.86, cw * 0.09);
   ctx.fill();
   ctx.restore();
 }
 
 /**
- * 능선 1겹 — 정규화 높이값(0~1)을 부드러운 곡선으로 이어 그린다. 직선으로
- * 이으면 각진 톱니가 보여 하늘 그림과 어울리지 않는다.
+ * One ridgeline layer — connects normalized height values (0–1) with smooth
+ * curves. Connecting them with straight lines would show angular sawteeth
+ * that clash with the sky painting.
  */
 function drawRidge(
   ctx: CanvasRenderingContext2D,
@@ -212,13 +224,15 @@ const RIDGE_FORE = [0.965, 0.955, 0.975, 0.96, 0.98, 0.965, 0.972];
 export type SkyVariant = "hero" | "calm";
 
 /**
- * 하늘 배경을 캔버스에 그린다.
+ * Paints the sky backdrop onto a canvas.
  *
- * - `hero` : 짙은 파랑에서 옅은 하늘로 내려오는 전면 그라디언트 + 구름 띠 +
- *   능선. 웰컴 인트로와 그 3D 씬 배경이 쓴다.
- * - `calm` : 위는 투명하고 아래로 갈수록 옅은 하늘이 스미는 잔잔한 버전.
- *   흐름 4단계 화면이 인트로와 같은 세계를 공유하되, 폼·대화의 가독성을
- *   해치지 않도록 콘텐츠가 놓이는 상단은 비워 둔다.
+ * - `hero` : a full gradient descending from deep blue to pale sky + the
+ *   cloud band + ridgelines. Used by the welcome intro and its 3D scene
+ *   background.
+ * - `calm` : a quiet version, transparent at the top with pale sky seeping in
+ *   toward the bottom. Used by the four flow-step screens to share the same
+ *   world as the intro while leaving the top — where content sits — empty so
+ *   the readability of forms and conversation is not harmed.
  */
 export function paintSky(
   ctx: CanvasRenderingContext2D,

@@ -1,9 +1,10 @@
 /*
- * SC-2 / M-2 — 배정 문제 스토어 격리
+ * SC-2 / M-2 — Assigned problem store isolation
  * ---------------------------------------------------------------------------
- * 렌더 계층 밑에서 세션 스토어 자체가 토큰별로 배정 문제를 격리하는지 검증한다.
- * 서로 다른 토큰은 서로 다른 세션을 가지며, 한 토큰의 배정 문제가 다른 토큰의
- * 세션으로 새어 나가지 않는다. 또한 같은 토큰은 재조회 시 배정이 고정된다.
+ * Below the render layer, verifies that the session store itself isolates the
+ * assigned problem per token. Different tokens have different sessions, and
+ * one token's assigned problem never leaks into another token's session. Also
+ * verifies that the same token's assignment stays fixed on re-lookup.
  * ---------------------------------------------------------------------------
  */
 
@@ -14,8 +15,8 @@ import { assignProblem } from "../../src/app/session/problems";
 const TOKEN_A = "token-a";
 const TOKEN_B = "token-b";
 
-describe("세션 스토어 — 토큰별 배정 격리 (SC-2/M-2)", () => {
-  it("각 토큰 세션은 자기 토큰에 배정된 문제만 보관한다", () => {
+describe("Session store — per-token assignment isolation (SC-2/M-2)", () => {
+  it("each token's session holds only the problem assigned to that token", () => {
     const a = getOrCreateSession(TOKEN_A);
     const b = getOrCreateSession(TOKEN_B);
 
@@ -25,16 +26,17 @@ describe("세션 스토어 — 토큰별 배정 격리 (SC-2/M-2)", () => {
     expect(b.problem.id).toBe(assignProblem(TOKEN_B).id);
   });
 
-  it("서로 다른 토큰의 배정 문제는 섞이지 않는다 (격리)", () => {
+  it("assigned problems of different tokens do not mix (isolation)", () => {
     const a = getOrCreateSession(TOKEN_A);
     const b = getOrCreateSession(TOKEN_B);
 
-    // 전제: 두 토큰은 다른 문제를 받는다. 이 전제가 깨지면 격리 검증이 무의미.
+    // Premise: the two tokens receive different problems. If this premise
+    // breaks, the isolation check is meaningless.
     expect(assignProblem(TOKEN_A).id).not.toBe(assignProblem(TOKEN_B).id);
     expect(a.problem.id).not.toBe(b.problem.id);
   });
 
-  it("같은 토큰의 배정은 재조회에도 고정된다", () => {
+  it("the same token's assignment stays fixed across re-lookups", () => {
     const first = getOrCreateSession(TOKEN_A);
     const again = getOrCreateSession(TOKEN_A);
 

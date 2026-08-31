@@ -1,30 +1,36 @@
 /*
- * WelcomeScreen — 웰컴 인트로 (`/invite/:token`, 흐름 4단계 앞단)
+ * WelcomeScreen — welcome intro (`/invite/:token`, ahead of the 4-step flow)
  * ---------------------------------------------------------------------------
- * Spec: 웰컴 인트로 — 임팩트 3D 버전(A안)
- *   components/button/base.md    (단일 CTA)
- *   foundations/i18n-strings.md  (screens.welcome 네임스페이스)
+ * Spec: Welcome intro — impact 3D version (option A)
+ *   components/button/base.md    (single CTA)
+ *   foundations/i18n-strings.md  (screens.welcome namespace)
  *
- * 초대 링크로 처음 들어온 지원자가 본인 확인 폼을 마주치기 **전에** 만나는 환영
- * 한 장이다. 목적은 첫인상을 "표준화 시험"이 아니라 "가볍게 초대받은 자리"로
- * 바꾸는 것 하나뿐이라, 화면에는 카피 한 묶음과 CTA 하나만 둔다(건너뛰기·
- * 뒤로가기 없음 — 스펙의 단일 액션 가정).
+ * A single welcome page the candidate arriving from the invite link sees
+ * **before** facing the identity verification form. Its one and only purpose
+ * is to change the first impression from "standardized test" to "a place you
+ * were casually invited to", so the screen holds just one block of copy and
+ * one CTA (no skip, no back — the spec's single-action assumption).
  *
- * 흐름 단계가 아니다. FLOW_STEPS에도, 단계 표시자에도 나타나지 않으며 셸
- * (AppShell) 밖에서 전면 히어로로 렌더된다. 기존 4단계 구조는 그대로다.
+ * It is not a flow step. It appears neither in FLOW_STEPS nor in the step
+ * indicator, and renders as a full-screen hero outside the shell (AppShell).
+ * The existing 4-step structure is untouched.
  *
- * 화면 구성은 참고 영상과 같은 **겹침** 구조다 — 하늘·구름 배경 위에 3D
- * 오브젝트가 뜨고, 그 앞에 eyebrow → 타이틀 → 서브카피 → CTA가 가운데 정렬로
- * 얹힌다. 오브젝트를 카피 옆이나 아래에 따로 두지 않기 때문에, 같은 크기라도
- * 화면을 압도하지 않고 배경 오브제로 읽힌다.
+ * The screen composition is the same **overlapping** structure as the
+ * reference video — the 3D object floats over the sky-and-clouds backdrop,
+ * with eyebrow → title → subcopy → CTA center-aligned in front of it. Because
+ * the object is not placed beside or below the copy, even at the same size it
+ * reads as a background objet rather than dominating the screen.
  *
- * 모션·3D를 못 쓰는 환경(prefers-reduced-motion · WebGL 미지원 · 로드 실패)에서는
- * 같은 카피·레이아웃을 유지한 채 오브젝트만 정적 SVG로 대체된다(스펙 흐름 5).
+ * In environments that cannot use motion/3D (prefers-reduced-motion, no WebGL
+ * support, load failure), the object is replaced by a static SVG while the
+ * same copy and layout are kept (spec flow 5).
  *
- * 제출 여부와 무관하게 언제나 이 화면이 뜬다. 헤더의 브랜드 마크가 여기로 오는
- * 문이기도 해서, 제출을 마친 뒤에도 첫 화면으로 나올 수 있어야 갇힌 느낌이 들지
- * 않는다. 이미 제출한 사람이 CTA를 누르면 흐름 첫 단계에서 셸이 **지난 제출
- * 안내**를 띄우고, 거기서 새로 시작할지 묻는다(잠그지 않는다).
+ * This screen always appears regardless of submission status. The brand mark
+ * in the header is also the door that leads here, so being able to come back
+ * to the first screen even after submitting keeps candidates from feeling
+ * trapped. When someone who already submitted presses the CTA, the shell
+ * shows the **previous submission notice** at the first flow step and asks
+ * there whether to start over (it does not lock).
  * ---------------------------------------------------------------------------
  */
 
@@ -39,12 +45,12 @@ import { StaticAsterisk } from "./welcome/StaticAsterisk";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
-/** 현재 환경이 모션 축소를 요구하는지 구독한다(설정 변경도 즉시 반영) */
+/** Subscribes to whether the current environment requests reduced motion (setting changes apply immediately) */
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    // jsdom 등 matchMedia가 없는 환경에서는 모션 있음(기본)으로 둔다.
+    // In environments without matchMedia (jsdom, etc.), default to motion enabled.
     if (typeof window.matchMedia !== "function") return;
     const query = window.matchMedia(REDUCED_MOTION_QUERY);
     setReduced(query.matches);
@@ -64,12 +70,12 @@ export function WelcomeScreen() {
   const prefersReducedMotion = usePrefersReducedMotion();
   const [webglUnavailable, setWebglUnavailable] = useState(false);
 
-  // 모션 축소 요청이거나 3D를 띄울 수 없으면 정적 오브젝트로 대체한다.
+  // Fall back to the static object when reduced motion is requested or 3D cannot be shown.
   const useStaticObject = prefersReducedMotion || webglUnavailable;
 
   return (
     <div className="welcome">
-      {/* 바탕 하늘 — 3D가 뜨면 그 위를 덮지만, 대체 경로에서는 이 그림이 남는다 */}
+      {/* Base sky — covered by the 3D canvas when it loads, but on the fallback path this painting remains */}
       <SkyBackdrop variant="hero" className="welcome__sky" />
 
       {useStaticObject ? (
@@ -85,7 +91,7 @@ export function WelcomeScreen() {
       </header>
 
       <main className="welcome__content">
-        {/* 오브젝트 위에 겹치는 카피 — 이 화면의 실제 초점 */}
+        {/* Copy layered over the object — the actual focus of this screen */}
         <p className="welcome__eyebrow">{s.eyebrow}</p>
         <h1 className="welcome__title">{s.title}</h1>
         <p className="welcome__description">{s.description}</p>
@@ -99,7 +105,7 @@ export function WelcomeScreen() {
         </button>
       </main>
 
-      {/* 장식 오브젝트의 접근성 이름 — 시각 요소를 스크린리더에도 한 줄로 알린다 */}
+      {/* Accessible name for the decorative object — announces the visual element to screen readers in one line */}
       <span className="visually-hidden">{s.visualLabel}</span>
     </div>
   );

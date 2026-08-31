@@ -1,44 +1,46 @@
 /*
- * LLM 어댑터 계층 — 공용 타입 (business logic ↔ 3rd-party 경계)
+ * LLM adapter layer — shared types (business logic ↔ 3rd-party boundary)
  * ---------------------------------------------------------------------------
- * BYOP(Bring Your Own Provider)의 제공자·메시지·에러 계약을 한곳에 모은다.
- * 이 모듈은 세션 스토어나 화면 문자열에 의존하지 않는다 — 어댑터가 자기 도메인
- * 타입만 노출해야 제공자 하나가 사라져도 나머지가 그대로 서고(격리), 테스트에서
- * fetch만 목킹해 계약을 검증할 수 있다.
+ * Gathers BYOP's (Bring Your Own Provider) provider, message, and error
+ * contracts in one place. This module depends on neither the session store
+ * nor the screen strings — adapters must expose only their own domain types
+ * so that if one provider disappears the rest stand untouched (isolation),
+ * and tests can verify the contract by mocking fetch alone.
  *
- * ChatMessage의 role은 API-중립적인 `user`/`assistant`다. 화면의 세션 로그
- * (role: applicant/ai)와의 매핑은 배선 grain의 몫이며, 이 경계 안으로 끌고
- * 들어오지 않는다.
+ * ChatMessage's role is the API-neutral `user`/`assistant`. Mapping to the
+ * screen's session log (role: applicant/ai) belongs to the wiring grain and
+ * is never pulled inside this boundary.
  *
- * apiKey는 어디에도 영속·로그하지 않는다 — 함수 인자로만 흐르고 요청 헤더에서만
- * 소비된다(비밀값).
+ * apiKey is never persisted or logged anywhere — it flows only as a function
+ * argument and is consumed only in request headers (a secret).
  * ---------------------------------------------------------------------------
  */
 
-/** 지원 제공자 식별자 — i18n `providers` 키(gpt/claude/gemini)와 동일 집합 */
+/** Supported provider identifiers — the same set as the i18n `providers` keys (gpt/claude/gemini) */
 export type ProviderId = "gpt" | "claude" | "gemini";
 
-/** 제공자 식별자 목록(레지스트리·검증용 단일 출처) */
+/** List of provider identifiers (single source for the registry and validation) */
 export const PROVIDER_IDS: readonly ProviderId[] = ["gpt", "claude", "gemini"];
 
-/** 임의 문자열이 알려진 제공자인지 판별(런타임 경계 가드) */
+/** Determines whether an arbitrary string is a known provider (runtime boundary guard) */
 export function isProviderId(value: string): value is ProviderId {
   return (PROVIDER_IDS as readonly string[]).includes(value);
 }
 
-/** 대화 역할 — LLM API 중립 표현 */
+/** Conversation role — LLM-API-neutral representation */
 export type ChatRole = "user" | "assistant";
 
-/** 어댑터 입력 메시지 — 순서는 호출자가 보장(user로 시작해 교대) */
+/** Adapter input message — the caller guarantees ordering (starts with user and alternates) */
 export interface ChatMessage {
   role: ChatRole;
   content: string;
 }
 
 /**
- * 제공자 어댑터 — 각 제공자 REST API를 격리하는 경계.
- * `send`는 apiKey를 인자로만 받아 요청 헤더에 싣고, 응답 텍스트를 반환하며,
- * 실패 시 `LlmError`를 throw 한다. 키를 저장·로그하지 않는다.
+ * Provider adapter — the boundary isolating each provider's REST API.
+ * `send` takes apiKey only as an argument, puts it in request headers,
+ * returns the response text, and throws `LlmError` on failure. It never
+ * stores or logs the key.
  */
 export interface ProviderAdapter {
   readonly id: ProviderId;
@@ -46,9 +48,9 @@ export interface ProviderAdapter {
 }
 
 /**
- * 어댑터 실패를 의미 있게 전달하는 에러. HTTP 상태(있으면)와 제공자를 담아
- * 호출부가 사용자에게 맥락 있는 메시지를 보일 수 있게 한다.
- * 메시지·필드 어디에도 apiKey를 포함하지 않는다.
+ * Error that conveys adapter failures meaningfully. Carries the HTTP status
+ * (when available) and the provider so callers can show the user a message
+ * with context. Neither the message nor any field ever includes the apiKey.
  */
 export class LlmError extends Error {
   readonly provider: ProviderId;
@@ -59,7 +61,7 @@ export class LlmError extends Error {
     this.name = "LlmError";
     this.provider = provider;
     this.status = status;
-    // 트랜스파일된 클래스에서 instanceof 가 동작하도록 프로토타입 복원
+    // Restore the prototype so instanceof works in transpiled classes
     Object.setPrototypeOf(this, LlmError.prototype);
   }
 }

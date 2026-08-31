@@ -1,19 +1,24 @@
 /*
- * PreviousSubmission — 이미 제출한 링크로 흐름에 다시 들어왔을 때
+ * PreviousSubmission — when re-entering the flow through an already-submitted link
  * ---------------------------------------------------------------------------
- * 예전에는 이 자리에서 흐름을 **잠갔다**("이미 제출되었습니다"). 잠금은 안전하긴
- * 하지만, 지원자 입장에서는 무엇을 제출했는지조차 못 보고 막히는 화면이었다.
- * 그래서 막는 대신 선택지를 준다.
+ * We used to **lock** the flow here ("Already submitted"). Locking is safe,
+ * but from the candidate's perspective it was a dead-end screen where they
+ * could not even see what they had submitted. So instead of blocking, we
+ * offer choices.
  *
- *   1. 무엇을 냈는지 읽어 본다   — 지난 대화 로그를 그대로 펼쳐 보여 준다.
- *   2. 그대로 두고 끝낸다        — 제출 완료 화면으로.
- *   3. 새 문제로 다시 시작한다   — 회차를 올려 다른 문제를 받고 처음부터.
+ *   1. Read what was submitted      — unfold the previous conversation log as is.
+ *   2. Leave it and finish          — go to the submission-complete screen.
+ *   3. Start over with a new problem — bump the attempt, receive a different
+ *      problem, and begin from the start.
  *
- * 어느 쪽을 골라도 **지난 제출은 지워지지 않는다**. 제출은 되돌릴 수 없다고
- * 약속했고 담당자가 검토할 자료이기도 하므로, "새로 시작"은 덮어쓰기가 아니라
- * 옆으로 치워 두는 것이다(store의 history). 그 사실을 버튼 옆 문구로도 밝힌다.
+ * Whichever they choose, **the previous submission is never deleted**. We
+ * promised that submission is irreversible, and it is also material the
+ * reviewer will examine, so "start over" is not an overwrite but a setting
+ * aside (the store's history). That fact is also stated in the copy next to
+ * the button.
  *
- * 하드코딩 스타일 0 — 값은 프리미티브와 flow-screens.css의 토큰 클래스에만 의존한다.
+ * Zero hardcoded styles — values depend only on the primitives and the token
+ * classes in flow-screens.css.
  * ---------------------------------------------------------------------------
  */
 
@@ -24,16 +29,17 @@ import { defaultLocale, strings } from "../i18n";
 import { startNewAttempt, type InviteSession } from "../session/store";
 
 interface PreviousSubmissionProps {
-  /** 제출을 마친 현재 세션 */
+  /** The current session that has completed submission */
   session: InviteSession;
 }
 
 /**
- * ISO 시각을 읽기 쉬운 표기로.
+ * Formats an ISO timestamp into a readable form.
  *
- * 브라우저 기본 로케일(toLocaleString())을 쓰면 한국어 브라우저에서 "2026. 8. 27.
- * 오후 9:28"처럼 한글이 섞여 나온다 — 이 제품은 영어 전용이므로 앱의 로케일을
- * 명시해 화면 언어와 어긋나지 않게 한다.
+ * Using the browser's default locale (toLocaleString()) mixes in Korean text
+ * on Korean-language browsers (e.g. "2026. 8. 27." with a Korean AM/PM
+ * marker) — this product is English-only, so we pin the app's locale to keep
+ * the output consistent with the screen language.
  */
 function formatMoment(iso: string): string {
   const date = new Date(iso);
@@ -54,7 +60,7 @@ export function PreviousSubmission({ session }: PreviousSubmissionProps) {
   const logId = "previous-submission-log";
 
   function handleRestart() {
-    // 지난 제출을 history로 옮기고 새 문제를 배정한 뒤, 처음(웰컴)부터 다시.
+    // Move the previous submission to history, assign a new problem, and start again from the beginning (welcome).
     startNewAttempt(token);
     navigate(welcomePath(token));
   }
@@ -67,7 +73,7 @@ export function PreviousSubmission({ session }: PreviousSubmissionProps) {
           <p className="empty-state__description">{s.description}</p>
         </div>
 
-        {/* 무엇을 언제 냈는지 — 펼치지 않아도 이만큼은 보인다 */}
+        {/* What was submitted and when — this much is visible without unfolding */}
         <dl className="previous__summary">
           <div className="previous__row">
             <dt className="previous__term">{s.submittedAtLabel}</dt>
@@ -101,7 +107,7 @@ export function PreviousSubmission({ session }: PreviousSubmissionProps) {
           </button>
         </div>
 
-        {/* 제출한 대화를 그대로 되읽는다(읽기 전용 — 이어서 쓸 수 없다) */}
+        {/* Reread the submitted conversation as is (read-only — cannot continue writing) */}
         {open && (
           <div className="previous__log" id={logId}>
             {session.messages.length === 0 ? (
@@ -130,7 +136,7 @@ export function PreviousSubmission({ session }: PreviousSubmissionProps) {
           </div>
         )}
 
-        {/* 다시 시작할지 묻는 자리 — 무엇이 사라지고 무엇이 남는지 먼저 말한다 */}
+        {/* Where we ask about starting over — saying first what goes away and what remains */}
         <div className="previous__restart">
           <h2 className="previous__restart-title">{s.restartTitle}</h2>
           <p className="previous__restart-body">{s.restartBody}</p>

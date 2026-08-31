@@ -1,13 +1,16 @@
 /*
- * SolveTimer — 문제 풀이 경과 시간
+ * SolveTimer — elapsed time for problem solving
  * ---------------------------------------------------------------------------
- * 제한 시간이 아니라 **경과 시간**이다. 카운트다운은 지원자를 쫓는 장치가 되고,
- * 이 제품은 답이 아니라 과정을 보는 자리라 그 압박이 목적과 어긋난다. 그래서
- * 올라가는 시계만 두고, "제한 없음"을 문구로 함께 밝힌다.
+ * This is **elapsed time**, not a time limit. A countdown becomes a device
+ * that chases the candidate, and since this product is a place that looks at
+ * the process rather than the answer, that pressure works against its
+ * purpose. So there is only a clock counting up, with "no limit" stated
+ * alongside it in the copy.
  *
- * 기준점은 세션의 startedAt이라 새로고침해도 0으로 되돌아가지 않는다.
- * 1초마다 갱신하되, 스크린리더가 매초 낭독하지 않도록 aria-live는 쓰지 않고
- * 라벨과 값만 읽히게 둔다.
+ * The reference point is the session's startedAt, so a refresh does not reset
+ * it to zero. It updates every second, but to keep screen readers from
+ * announcing every second, aria-live is not used — only the label and value
+ * are read.
  * ---------------------------------------------------------------------------
  */
 
@@ -15,11 +18,11 @@ import { useEffect, useState } from "react";
 import { strings } from "../../i18n";
 
 interface SolveTimerProps {
-  /** 풀이를 시작한 시각(ISO). 아직 없으면 0부터 센다 */
+  /** The time solving started (ISO). If not set yet, count from 0 */
   startedAt: string | null;
 }
 
-/** 경과 초를 mm:ss(1시간 넘으면 h:mm:ss)로 */
+/** Formats elapsed seconds as mm:ss (h:mm:ss past one hour) */
 function formatElapsed(totalSeconds: number): string {
   const seconds = Math.max(0, Math.floor(totalSeconds));
   const hours = Math.floor(seconds / 3600);

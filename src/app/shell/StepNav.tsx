@@ -1,11 +1,12 @@
 /*
- * StepNav — 단계 표시자(navigation) 컴포넌트
+ * StepNav — step indicator (navigation) component
  * ---------------------------------------------------------------------------
  * Spec: components/navigation/base.md
- * app-shell 헤더에 배치되어 현재 단계를 항상 반영한다. FLOW_STEPS(단일 흐름
- * 정의)를 그대로 렌더하며, 상태(완료/현재/예정)를 형태·번호·레이블·스크린리더
- * 텍스트로 병행 표현한다(색 단독 금지).
- * 스타일 값은 navigation.css의 토큰 클래스에만 의존한다.
+ * Placed in the app-shell header, always reflecting the current step. It
+ * renders FLOW_STEPS (the single flow definition) as is, and expresses each
+ * status (done/current/upcoming) redundantly through shape, number, label,
+ * and screen-reader text (never color alone).
+ * Style values depend only on the token classes in navigation.css.
  * ---------------------------------------------------------------------------
  */
 
@@ -13,7 +14,7 @@ import { FLOW_STEPS, stepStatus, type StepId } from "../flow";
 import { strings } from "../i18n";
 
 interface StepNavProps {
-  /** 현재 단계 id */
+  /** Current step id */
   current: StepId;
 }
 
@@ -43,7 +44,7 @@ export function StepNav({ current }: StepNavProps) {
                   {idx + 1}
                 </span>
                 <span className="stepper__label">{step.label}</span>
-                {/* 색 단독 금지 — 상태를 텍스트로도 제공(스크린리더) */}
+                {/* Never color alone — also provide the status as text (screen readers) */}
                 <span className="stepper__status-sr">{STATUS_TEXT[status]}</span>
               </div>
               {!isLast && (

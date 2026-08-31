@@ -1,13 +1,16 @@
 /*
- * ProblemPin — 대화 위에 고정되는 배정 문제
+ * ProblemPin — the assigned problem pinned above the conversation
  * ---------------------------------------------------------------------------
- * 문제 안내(brief)를 지나 대화에 들어오면 문제 원문을 다시 볼 길이 없어진다.
- * 그래서 대화 바로 위에 문제를 붙여 두고, 접었다 폈다 할 수 있게 한다 — 항상
- * 펼쳐 두면 대화가 밀려나고, 아예 없으면 문제를 확인하러 화면을 떠나야 한다.
+ * Once past the problem brief and into the conversation, there is no way to
+ * see the problem's original text again. So we pin the problem right above
+ * the conversation and let it collapse and expand — kept always expanded it
+ * pushes the conversation away, and with no pin at all the candidate has to
+ * leave the screen to check the problem.
  *
- * 접힘 상태에서도 문제 **제목**은 남긴다. 무엇을 풀고 있는지는 접어도 보여야
- * 방향을 잃지 않는다. 상태는 버튼 문구와 aria-expanded로 함께 알린다
- * (색·아이콘 단독으로 전달하지 않는다).
+ * Even collapsed, the problem **title** remains. What is being solved must
+ * stay visible even when folded, so the candidate never loses their bearings.
+ * The state is conveyed by both the button text and aria-expanded (never
+ * color or icon alone).
  * ---------------------------------------------------------------------------
  */
 

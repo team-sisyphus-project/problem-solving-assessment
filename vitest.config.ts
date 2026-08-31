@@ -1,9 +1,11 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-// 컴포넌트 계약 검증용 러너 설정. jsdom + Testing Library로 BriefScreen을
-// 실제 렌더해 배정 문제 노출·격리(SC-2/M-2)를 자동 검증한다. 브라우저 자동화
-// (Playwright 등)는 범위 밖 — 순수 단위/컴포넌트 레벨로만 계약을 검증한다.
+// Runner configuration for component contract verification. Actually renders
+// BriefScreen with jsdom + Testing Library to automatically verify assigned
+// problem exposure and isolation (SC-2/M-2). Browser automation (Playwright
+// and the like) is out of scope — contracts are verified purely at the
+// unit/component level.
 export default defineConfig({
   plugins: [react()],
   test: {

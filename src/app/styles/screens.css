@@ -1,14 +1,16 @@
 /*
- * 흐름 화면(플레이스홀더) 레이아웃 — 토큰 전용 유틸
+ * Flow screen (placeholder) layouts — token-only utilities
  * ---------------------------------------------------------------------------
- * 지원자 흐름 각 단계의 플레이스홀더 화면은 공용 프리미티브(empty-state·button)로
- * 골격만 구성한다. 여기서는 그 프리미티브를 배치하는 최소 레이아웃(세로 스택,
- * 액션 정렬, 제공자 선택 그룹)만 담당한다. 모든 값은 spacing/sizing 등 토큰
- * 참조이며, display/flex 등 구조값만 리터럴이다(하드코딩 0).
+ * Each placeholder screen in the candidate flow is built as a skeleton from
+ * the shared primitives (empty-state, button). This file handles only the
+ * minimal layout that arranges those primitives (vertical stack, action
+ * alignment, provider selection group). Every value is a spacing/sizing token
+ * reference; only structural values like display/flex are literals (zero
+ * hardcoding).
  * ---------------------------------------------------------------------------
  */
 
-/* 화면 세로 스택 — empty-state 블록과 액션을 넉넉한 간격으로 쌓는다 */
+/* Screen vertical stack — stacks the empty-state block and actions with generous spacing */
 .flow-screen {
   display: flex;
   flex-direction: column;
@@ -17,17 +19,18 @@
 }
 
 /*
- * 흐름 화면의 콘텐츠 카드 — 하늘 배경 위에 떠 있는 흰 표면.
- * 셸 배경이 잔잔한 하늘 그림으로 바뀌면서, 콘텐츠가 배경에 직접 얹히면 읽기
- * 기준면이 사라진다. 배정 문제 카드(.problem-brief)와 같은 표면·둥글기·
- * 엘리베이션을 공유해 흐름 전체에서 "읽는 자리"가 같은 형태로 보이게 한다.
+ * Flow screen content card — a white surface floating over the sky backdrop.
+ * With the shell background becoming a calm sky illustration, content placed
+ * directly on the backdrop loses its reading plane. Sharing the same surface,
+ * corner radius, and elevation as the assigned problem card (.problem-brief)
+ * keeps the "reading spot" looking the same shape throughout the flow.
  */
 .flow-panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
-  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
-  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  box-sizing: border-box; /* structural — keep padding from overflowing the width */
+  width: 100%; /* structural — fit the container width */
   max-width: var(--container-width-md);
   padding: var(--space-xl);
   background-color: var(--surface-base);
@@ -36,7 +39,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-/* 액션 행 — 주요/보조 버튼을 나란히 */
+/* Action row — primary/secondary buttons side by side */
 .flow-actions {
   display: flex;
   flex-wrap: wrap;
@@ -44,21 +47,24 @@
   gap: var(--space-sm);
 }
 
-/* 본인 확인 폼(verify) — 입력 필드(.input-field)를 세로로 쌓는 집중 입력 폭.
-   필드 사이 간격·읽기 폭은 토큰 참조, display/flex 등 구조값만 리터럴이다. */
+/* Identity verification form (verify) — a focused input width that stacks
+   input fields (.input-field) vertically. Field spacing and reading width are
+   token references; only structural values like display/flex are literals. */
 .verify-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
-  align-self: center; /* 구조값 — 카드 안에서 가운데 */
-  max-width: var(--container-width-sm); /* sizing: 가장 좁은 읽기 폭(집중 입력) */
+  width: 100%; /* structural — fit the container width */
+  align-self: center; /* structural — centered inside the card */
+  max-width: var(--container-width-sm); /* sizing: narrowest reading width (focused input) */
 }
 
-/* 데이터 열람 동의 블록(verify, S-1) — 입력 아래·진행 버튼 위에 놓이는 게이트.
-   새 톤/색을 만들지 않고 기존 토큰과 프리미티브(.input-field__error)만 조합한다.
-   구분선으로 입력과 분리하고, 두 고지 문단을 같은 무게로 쌓는다. display/flex·
-   flex-shrink 등 구조값만 리터럴이다(하드코딩 0). */
+/* Data access consent block (verify, S-1) — the gate placed below the inputs
+   and above the continue button. It creates no new tones/colors, combining
+   only existing tokens and primitives (.input-field__error). A divider
+   separates it from the inputs, and the two notice paragraphs are stacked at
+   equal weight. Only structural values like display/flex and flex-shrink are
+   literals (zero hardcoding). */
 .verify-consent {
   display: flex;
   flex-direction: column;
@@ -67,7 +73,7 @@
   border-top: var(--border-width-sm) solid var(--border-subtle);
 }
 
-/* 블록 제목 — 무엇에 동의하는지 알리는 작은 초점 */
+/* Block title — a small focal point saying what is being consented to */
 .verify-consent__title {
   margin: 0;
   font-size: var(--text-size-sm);
@@ -76,7 +82,8 @@
   color: var(--text-strong);
 }
 
-/* (a) 열람 안내 · (b) 비학습 고지 — 두 문장을 동등한 본문 위계로(페르소나 B) */
+/* (a) access notice · (b) no-training notice — two sentences at equal body
+   hierarchy (persona B) */
 .verify-consent__statement {
   margin: 0;
   font-size: var(--text-size-sm);
@@ -84,7 +91,7 @@
   color: var(--text-default);
 }
 
-/* 체크박스 + 라벨을 한 줄로 묶어 클릭 표적을 라벨 전체로 넓힌다 */
+/* Group the checkbox and label on one line to widen the click target to the whole label */
 .verify-consent__check {
   display: flex;
   align-items: flex-start;
@@ -92,10 +99,11 @@
   cursor: pointer;
 }
 
-/* 네이티브 체크박스를 강조색으로 물들여 흐름 톤과 맞춘다(새 색이 아니라 토큰 재사용) */
+/* Tint the native checkbox with the accent color to match the flow's tone
+   (token reuse, not a new color) */
 .verify-consent__checkbox {
-  flex-shrink: 0; /* 구조값 — 라벨이 길어도 네모가 눌리지 않게 */
-  width: var(--space-md); /* sizing — 본문 글자와 같은 눈높이의 표적 */
+  flex-shrink: 0; /* structural — keep the box from being squeezed by a long label */
+  width: var(--space-md); /* sizing — a target at the same eye level as body text */
   height: var(--space-md);
   margin: 0;
   accent-color: var(--accent-default);
@@ -108,25 +116,27 @@
   color: var(--text-strong);
 }
 
-/* 배정 문제 안내 카드(brief) — 배정된 문제 1건(제목·설명)을 위계에 맞춰 제시.
-   eyebrow(맥락)→제목(초점)→설명(본문)→안내(다음 행동)의 세로 위계로, 화면당
-   주요 초점 하나(원칙 3)를 이 카드에 둔다. 모든 디자인 값은 토큰 참조이며,
-   display/flex/width:100%/white-space 등 구조값만 리터럴이다(하드코딩 0). */
+/* Assigned problem card (brief) — presents the one assigned problem (title,
+   description) with proper hierarchy. Vertical hierarchy of eyebrow (context)
+   → title (focal point) → description (body) → guide (next action); the
+   screen's single primary focal point (principle 3) lives on this card. All
+   design values are token references; only structural values like
+   display/flex/width:100%/white-space are literals (zero hardcoding). */
 .problem-brief {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm); /* eyebrow·제목·설명 사이 세로 간격 */
-  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
-  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
-  max-width: var(--container-width-md); /* sizing: 집중 흐름 읽기 폭 */
-  padding: var(--space-xl); /* 카드 안쪽 여백(넉넉한 여백, 원칙 1) */
+  gap: var(--space-sm); /* vertical spacing between eyebrow, title, description */
+  box-sizing: border-box; /* structural — keep padding from overflowing the width */
+  width: 100%; /* structural — fit the container width */
+  max-width: var(--container-width-md); /* sizing: focused-flow reading width */
+  padding: var(--space-xl); /* card inner padding (generous whitespace, principle 1) */
   background-color: var(--surface-base);
   border: var(--border-width-sm) solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm); /* 은은한 엘리베이션으로 콘텐츠를 표면으로 */
+  box-shadow: var(--shadow-sm); /* subtle elevation to lift the content onto a surface */
 }
 
-/* eyebrow — 배정 문제임을 알리는 보조 라벨(무채색·작게) */
+/* eyebrow — a secondary label marking this as the assigned problem (neutral, small) */
 .problem-brief__eyebrow {
   margin: 0;
   font-size: var(--text-size-xs);
@@ -136,7 +146,7 @@
   color: var(--text-muted);
 }
 
-/* 문제 제목 — 화면의 주요 초점(가장 크고 굵고 진하게) */
+/* Problem title — the screen's primary focal point (largest, boldest, darkest) */
 .problem-brief__title {
   margin: 0;
   font-size: var(--text-size-2xl);
@@ -145,16 +155,16 @@
   color: var(--text-strong);
 }
 
-/* 문제 설명 — 본문 위계(편안한 행간, 줄바꿈 보존) */
+/* Problem description — body hierarchy (relaxed line height, line breaks preserved) */
 .problem-brief__description {
   margin: 0;
   font-size: var(--text-size-md);
   line-height: var(--line-height-relaxed);
   color: var(--text-default);
-  white-space: pre-line; /* 구조값 — 설명 원문의 줄바꿈 유지 */
+  white-space: pre-line; /* structural — preserve the description's original line breaks */
 }
 
-/* 다음 행동 안내 — 구분선으로 문제 본문과 분리한 보조 문구 */
+/* Next-action guide — secondary text separated from the problem body by a divider */
 .problem-brief__guide {
   margin: 0;
   padding-top: var(--space-md);
@@ -164,16 +174,17 @@
   color: var(--text-muted);
 }
 
-/* 제공자 선택 그룹(M-5) — GPT/Claude/Gemini 선택 자리.
-   대화·작성창과 마찬가지로 흰 표면 위에 올려, 하늘 배경 위에서도 "고르는 자리"가
-   또렷하게 구분되게 한다(흐름 화면 카드와 같은 표면·둥글기·엘리베이션). */
+/* Provider selection group (M-5) — the spot for choosing GPT/Claude/Gemini.
+   Like the conversation and composer, it sits on a white surface so the
+   "choosing spot" stays clearly distinct even over the sky backdrop (same
+   surface, corner radius, and elevation as the flow screen cards). */
 .provider-group {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-sm);
-  box-sizing: border-box; /* 구조값 — padding이 폭을 넘치지 않게 */
-  width: 100%; /* 구조값 — 컨테이너 폭에 맞춤 */
+  box-sizing: border-box; /* structural — keep padding from overflowing the width */
+  width: 100%; /* structural — fit the container width */
   padding: var(--space-lg);
   background-color: var(--surface-base);
   border: var(--border-width-sm) solid var(--border-subtle);
@@ -200,14 +211,15 @@
   gap: var(--space-sm);
 }
 
-/* 선택 상태 안내 텍스트 */
+/* Selection status text */
 .provider-group__selected {
   font-size: var(--text-size-sm);
   line-height: var(--line-height-normal);
   color: var(--text-default);
 }
 
-/* 제공자 버튼이 선택되면 주요 위계로 강조(aria-pressed=true) */
+/* When a provider button is selected, promote it to the primary hierarchy
+   (aria-pressed=true) */
 .btn[aria-pressed="true"] {
   background-color: var(--accent-default);
   border-color: var(--accent-default);

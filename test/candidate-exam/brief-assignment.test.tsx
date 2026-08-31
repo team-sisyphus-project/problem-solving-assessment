@@ -1,12 +1,14 @@
 /*
- * SC-2 / M-2 — 배정 문제 노출·격리 (렌더 계약)
+ * SC-2 / M-2 — Assigned problem exposure and isolation (render contract)
  * ---------------------------------------------------------------------------
- * 검증 대상: 문제 안내 화면(BriefScreen)이 "해당 토큰에 배정된 문제 1건"의
- * 제목·설명만 표시하고, 다른 토큰에 배정된 문제는 노출하지 않는다.
+ * Under test: the problem brief screen (BriefScreen) shows only the title and
+ * description of the single problem assigned to the given token, and never
+ * exposes a problem assigned to another token.
  *
- * 결합 회피: 특정 문제 텍스트를 하드코딩하지 않고 프로덕션 계약(assignProblem)
- * 이 반환하는 값을 기준으로 검증한다. 검증하는 것은 "화면이 그 토큰의 배정
- * 결과를 그대로 보여주는가"이지, 특정 문자열이 화면에 있는가가 아니다.
+ * Avoiding coupling: instead of hardcoding specific problem text, we verify
+ * against the values returned by the production contract (assignProblem).
+ * What we assert is "does the screen show exactly that token's assignment
+ * result", not whether a particular string is on screen.
  * ---------------------------------------------------------------------------
  */
 
@@ -16,7 +18,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { BriefScreen } from "../../src/app/screens/BriefScreen";
 import { assignProblem } from "../../src/app/session/problems";
 
-/** 주어진 토큰의 brief 경로에서 BriefScreen을 렌더한다. */
+/** Renders BriefScreen at the brief route for the given token. */
 function renderBriefFor(token: string) {
   return render(
     <MemoryRouter initialEntries={[`/invite/${token}/brief`]}>
@@ -27,33 +29,35 @@ function renderBriefFor(token: string) {
   );
 }
 
-// 서로 다른 문제가 배정되는 두 토큰(고정 세트, 결정적 배정). 두 토큰이 정말
-// 다른 문제를 받는지 먼저 확인해 테스트 전제를 방어한다 — 같은 문제라면
-// 격리 검증이 의미를 잃는다.
+// Two tokens that receive different problems (fixed set, deterministic
+// assignment). We first confirm the two tokens really do get different
+// problems to defend the test premise — if they got the same problem, the
+// isolation check would be meaningless.
 const TOKEN_A = "token-a";
 const TOKEN_B = "token-b";
 
-describe("BriefScreen — 배정 문제 노출·격리 (SC-2/M-2)", () => {
-  it("전제: 두 토큰에는 서로 다른 문제가 배정된다", () => {
+describe("BriefScreen — assigned problem exposure and isolation (SC-2/M-2)", () => {
+  it("premise: the two tokens are assigned different problems", () => {
     expect(assignProblem(TOKEN_A).id).not.toBe(assignProblem(TOKEN_B).id);
   });
 
-  it("배정된 문제 1건의 제목과 설명이 화면에 표시된다", () => {
+  it("shows the title and description of the single assigned problem", () => {
     const assigned = assignProblem(TOKEN_A);
 
     renderBriefFor(TOKEN_A);
 
-    // 제목은 접근성 위계(heading)로도 노출된다.
+    // The title is also exposed in the accessibility hierarchy (heading).
     expect(
       screen.getByRole("heading", { name: assigned.title }),
     ).toBeInTheDocument();
     expect(screen.getByText(assigned.description)).toBeInTheDocument();
   });
 
-  it("다른 토큰의 문제는 노출되지 않는다 (렌더 격리)", () => {
+  it("does not expose another token's problem (render isolation)", () => {
     const otherAssigned = assignProblem(TOKEN_A);
 
-    // TOKEN_B 화면을 렌더한다 — TOKEN_A에 배정된 문제는 이 스코프 밖이다.
+    // Render TOKEN_B's screen — the problem assigned to TOKEN_A is outside
+    // this scope.
     renderBriefFor(TOKEN_B);
 
     expect(screen.queryByText(otherAssigned.title)).not.toBeInTheDocument();

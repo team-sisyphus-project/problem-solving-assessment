@@ -1,28 +1,37 @@
 /*
- * AppShell — 레이아웃 셸 컴포넌트
+ * AppShell — layout shell component
  * ---------------------------------------------------------------------------
  * Spec: components/app-shell/base.md
- * 헤더(제품 식별 + 단계 표시자) + 메인 아웃렛(<Outlet/>) + 콘텐츠 컨테이너로
- * 구성된 최상위 프레임. 흐름 단계가 바뀌어도 변하지 않는 공통 골격이며, 메인
- * 아웃렛은 한 번에 한 단계만 렌더한다(원칙 3 — 화면당 초점 하나).
+ * The top-level frame composed of a header (product identity + step indicator),
+ * the main outlet (<Outlet/>), and the content container. It is the shared
+ * skeleton that stays unchanged as flow steps change, and the main outlet
+ * renders exactly one step at a time (principle 3 — one focus per screen).
  *
- * 현재 단계는 라우트 경로에서 파생해 StepNav에 반영한다(화면 교체 시 자동 갱신).
- * 스타일 값은 app-shell.css의 토큰 클래스에만 의존한다.
+ * The current step is derived from the route path and reflected in StepNav
+ * (updated automatically as screens swap). Style values depend only on the
+ * token classes in app-shell.css.
  *
- * 배경은 웰컴 인트로와 같은 하늘 그림을 잔잔한 변형(calm)으로 깐다. 인트로에서
- * 흐름으로 넘어갈 때 세계가 바뀌지 않게 하되, 화면 아래쪽에만 옅게 스미도록 해
- * 폼·대화의 가독성은 그대로 지킨다. 브랜드 마크도 인트로와 같은 것을 쓴다.
+ * The backdrop is the same sky painting as the welcome intro, laid down in its
+ * calm variant. The world should not change when moving from the intro into
+ * the flow, but it only bleeds faintly into the lower part of the screen so
+ * the readability of forms and conversation stays intact. The brand mark is
+ * the same one used in the intro.
  *
- * 제출 후 재진입(SC-4/M-5 개정): 토큰이 이미 제출됨이면, 흐름의 어느 단계로
- * 딥링크/재진입해도(본인 확인·문제 안내·문제 풀이) 자식 화면 대신 **지난 제출
- * 안내**(PreviousSubmission)를 렌더한다. 예전에는 여기서 흐름을 잠갔지만, 무엇을
- * 냈는지조차 못 보고 막히는 화면이었다. 지금은 지난 제출을 읽어 보거나, 그대로
- * 두고 새 문제로 다시 시작할지 **묻는다** — 어느 쪽이든 지난 제출은 지워지지
- * 않는다(store의 history로 옮겨 둔다).
+ * Re-entry after submission (SC-4/M-5 revision): if the token is already
+ * submitted, deep-linking/re-entering any step of the flow (identity
+ * verification, problem brief, problem solving) renders the **previous
+ * submission notice** (PreviousSubmission) instead of the child screen. We
+ * used to lock the flow here, but that was a dead-end screen where candidates
+ * could not even see what they had submitted. Now we let them read their
+ * previous submission, or **ask** whether to leave it as is or start over with
+ * a new problem — either way, the previous submission is never deleted (it is
+ * moved to the store's history).
  *
- * 유일한 예외는 제출 직후 목적지인 제출 완료(complete)로, 여기서만 자식 화면
- * (<Outlet/>)이 그대로 도달한다. 가드를 개별 화면이 아니라 셸 계층에 두어 흐름
- * 전체에 일괄 적용하는 구조는 그대로다.
+ * The only exception is the submission-complete screen (complete), the
+ * destination right after submitting — only there does the child screen
+ * (<Outlet/>) still get through. The structure of placing the guard at the
+ * shell layer rather than in individual screens, so it applies uniformly
+ * across the whole flow, remains unchanged.
  * ---------------------------------------------------------------------------
  */
 
@@ -39,24 +48,28 @@ export function AppShell() {
   const { pathname } = useLocation();
   const { token = "" } = useParams();
 
-  // 토큰 첫 접근 시점에 세션을 확보(배정 문제 고정 등). 이후 화면들이 재사용.
+  // Establish the session on first access to the token (fixing the assigned
+  // problem, etc.). Subsequent screens reuse it.
   const session = getOrCreateSession(token);
 
-  // 현재 경로 조각(토큰 베이스 이후)에서 흐름 단계를 파생. 매칭 없으면 첫 단계.
+  // Derive the flow step from the current path segment (after the token base).
+  // If nothing matches, fall back to the first step.
   const base = `${INVITE_BASE}/${token}`;
   const segment = pathname.startsWith(base) ? pathname.slice(base.length) : "";
   const currentStepId = stepIdFromSegment(segment);
   const currentStep =
     FLOW_STEPS.find((s) => s.id === currentStepId) ?? FLOW_STEPS[0];
 
-  // 제출 후 재진입 — 제출됨이면 완료(complete)를 제외한 모든 단계에서 자식 화면
-  // 대신 지난 제출 안내를 렌더한다. 완료는 제출 직후 목적지라 예외.
+  // Re-entry after submission — if submitted, render the previous submission
+  // notice instead of the child screen on every step except complete.
+  // Complete is exempt because it is the destination right after submitting.
   const showPrevious =
     currentStep.id !== "complete" && session.submittedAt != null;
 
-  // 2단 레이아웃을 쓰는 단계(본인 확인·문제 풀이)만 넓은 콘텐츠 폭을 쓴다
-  // (app-shell base: md~lg). 잠금 안내는 좁은 폭을 유지한다(다른 empty-state
-  // 화면과 동일).
+  // Only the steps that use the two-column layout (identity verification,
+  // problem solving) use the wide content width (app-shell base: md~lg). The
+  // lock notice keeps the narrow width (same as the other empty-state
+  // screens).
   const isWide =
     !showPrevious &&
     (currentStep.id === "solve" || currentStep.id === "verify");
@@ -66,12 +79,12 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
-      {/* 웰컴 인트로와 같은 하늘을 잔잔한 버전으로 — 흐름 전체의 배경 통일 */}
+      {/* The same sky as the welcome intro, in its calm version — a unified backdrop for the whole flow */}
       <SkyBackdrop variant="calm" className="app-shell__backdrop" />
 
       <header className="app-shell__header">
         <div className="app-shell__brand">
-          {/* 마크를 누르면 처음(웰컴)으로 — 제출을 마쳤어도 막지 않는다 */}
+          {/* Clicking the mark returns to the start (welcome) — never blocked, even after submitting */}
           <BrandMark tone="on-surface" to={welcomePath(token)} />
           <span className="app-shell__context">{strings.app.context}</span>
         </div>

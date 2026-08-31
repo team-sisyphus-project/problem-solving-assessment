@@ -1,31 +1,32 @@
 /*
- * LLM 어댑터 공용 HTTP 헬퍼
+ * Shared HTTP helper for the LLM adapters
  * ---------------------------------------------------------------------------
- * 세 제공자 어댑터가 공유하는 JSON POST + 에러 정규화. 네트워크 실패·비-2xx
- * 응답·파싱 불가를 모두 `LlmError`로 승격해, 호출부가 제공자별 실패 형태를
- * 일일이 알 필요 없게 한다(에러는 정보다 — 삼키지 않고 맥락과 함께 전파).
+ * JSON POST + error normalization shared by the three provider adapters.
+ * Network failures, non-2xx responses, and unparsable bodies are all promoted
+ * to `LlmError`, so callers never need to know each provider's failure shape
+ * (errors are information — propagate them with context, never swallow them).
  *
- * 브라우저 전역 `fetch`만 사용한다. 테스트는 이 `fetch`를 목킹해 실제 네트워크
- * 없이 라우팅·매핑·파싱·에러 전파를 검증한다.
+ * Only the browser-global `fetch` is used. Tests mock this `fetch` to verify
+ * routing, mapping, parsing, and error propagation without a real network.
  * ---------------------------------------------------------------------------
  */
 
 import { LlmError, type ProviderId } from "./types";
 
-/** 비-2xx 응답 본문에서 사람이 읽을 수 있는 상세 메시지를 최선-노력으로 추출 */
+/** Best-effort extraction of a human-readable detail message from a non-2xx response body */
 async function extractErrorDetail(response: Response): Promise<string> {
   try {
     const text = await response.text();
     if (!text) return "";
     try {
-      // 대부분의 제공자는 { error: { message } } 또는 { error: { ... } }
+      // Most providers use { error: { message } } or { error: { ... } }
       const data = JSON.parse(text) as {
         error?: { message?: string } | string;
       };
       if (typeof data.error === "string") return data.error;
       if (data.error?.message) return data.error.message;
     } catch {
-      // JSON 아니면 원문(길이 제한)
+      // Not JSON — fall back to the raw text (length-capped)
     }
     return text.slice(0, 500);
   } catch {
@@ -34,11 +35,11 @@ async function extractErrorDetail(response: Response): Promise<string> {
 }
 
 /**
- * JSON 본문을 POST 하고 파싱된 응답을 반환한다.
- * 실패는 전부 `LlmError`로 throw:
- *   - 네트워크 자체 실패(fetch reject)
- *   - HTTP 비-2xx (상태·상세 포함)
- *   - 응답 JSON 파싱 불가
+ * POSTs a JSON body and returns the parsed response.
+ * Every failure is thrown as `LlmError`:
+ *   - the network call itself failing (fetch reject)
+ *   - HTTP non-2xx (with status and detail)
+ *   - unparsable response JSON
  */
 export async function postJson<T>(
   provider: ProviderId,
@@ -56,7 +57,7 @@ export async function postJson<T>(
   } catch {
     throw new LlmError(
       provider,
-      `${provider} 요청을 보내지 못했습니다(네트워크 오류).`,
+      `The ${provider} request could not be sent (network error).`,
     );
   }
 
@@ -64,7 +65,7 @@ export async function postJson<T>(
     const detail = await extractErrorDetail(response);
     throw new LlmError(
       provider,
-      `${provider} 요청이 실패했습니다(HTTP ${response.status})` +
+      `The ${provider} request failed (HTTP ${response.status})` +
         (detail ? `: ${detail}` : "") +
         ".",
       response.status,
@@ -76,7 +77,7 @@ export async function postJson<T>(
   } catch {
     throw new LlmError(
       provider,
-      `${provider} 응답을 해석할 수 없습니다.`,
+      `The ${provider} response could not be parsed.`,
       response.status,
     );
   }

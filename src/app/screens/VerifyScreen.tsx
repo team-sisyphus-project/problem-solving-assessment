@@ -1,26 +1,31 @@
 /*
- * VerifyScreen — 흐름 1단계: 본인 확인 (`/invite/:token`)
+ * VerifyScreen — flow step 1: identity verification (`/invite/:token`)
  * ---------------------------------------------------------------------------
  * Spec:
- *   components/input/base.md        (이름·이메일 폼 컨트롤 — 기본/오류 상태)
- *   components/empty-state/base.md  (제출 후 재응시 잠금 안내)
- *   foundations/i18n-strings.md     (screens.verify 네임스페이스)
+ *   components/input/base.md        (name/email form controls — default/error states)
+ *   components/empty-state/base.md  (retake lock notice after submission)
+ *   foundations/i18n-strings.md     (screens.verify namespace)
  *
- * 초대 링크로 진입한 지원자가 별도 회원가입/로그인 없이(SC-1) 최소 정보(이름·
- * 이메일)로 본인을 확인하고 응시를 시작한다. 로컬 검증을 통과하면 신원을 세션에
- * 저장(setCandidate)하고 문제 안내(brief)로 전진한다.
+ * The candidate entering from the invite link verifies their identity with
+ * minimal information (name, email) — no separate sign-up/login (SC-1) — and
+ * starts the assessment. Once local validation passes, the identity is saved
+ * to the session (setCandidate) and the flow advances to the problem brief.
  *
- * 제출 후 재응시 잠금(SC-4/M-5)은 이 화면이 아니라 셸 계층(AppShell)의 공유
- * 가드가 흐름 전체에 걸쳐 담당한다 — 제출됨이면 본인 확인 인덱스에 도달하기
- * 전에 셸이 잠금 안내로 대체하므로, 이 화면은 미제출 상태만 다룬다.
+ * The retake lock after submission (SC-4/M-5) is handled not by this screen
+ * but by the shared guard at the shell layer (AppShell) across the whole flow
+ * — when submitted, the shell replaces this screen with the lock notice
+ * before the identity verification index is ever reached, so this screen only
+ * deals with the not-yet-submitted state.
  *
- * 화면은 2단 구성이다. 왼쪽은 배정된 문제를 훑어 내려가는 스캔 연출(ProblemScan)
- * 로, 폼을 채우는 동안 "무엇을 보는 자리인가"를 읽게 한다. 오른쪽이 실제 입력이다.
- * 좁은 화면에서는 위아래로 쌓인다.
+ * The screen is a two-column composition. The left is a scanning effect over
+ * the assigned problem (ProblemScan), letting the candidate read "what this
+ * place is about" while filling in the form. The right is the actual input.
+ * On narrow screens they stack vertically.
  *
- * 실제 이메일 인증·서버 검증은 범위 밖 — 형식 검증만 로컬로 수행한다.
- * 하드코딩 스타일 0 — 모든 시각 표현은 프리미티브(.input/.empty-state/.btn)와
- * screens.css의 토큰 클래스에만 의존한다.
+ * Real email verification and server-side validation are out of scope — only
+ * format validation is performed locally.
+ * Zero hardcoded styles — every visual detail depends only on the primitives
+ * (.input/.empty-state/.btn) and the token classes in screens.css.
  * ---------------------------------------------------------------------------
  */
 
@@ -31,7 +36,7 @@ import { strings } from "../i18n";
 import { recordConsent, setCandidate } from "../session/store";
 import { ProblemScan } from "./verify/ProblemScan";
 
-/** 최소 이메일 형식 검증(로컬) — 실제 인증은 범위 밖 */
+/** Minimal email format validation (local) — real verification is out of scope */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface FieldErrors {
@@ -47,7 +52,7 @@ export function VerifyScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
-  // 데이터 열람 동의(S-1) — 명시적 체크 없이는 다음 단계로 넘어갈 수 없다.
+  // Consent to data review (S-1) — cannot advance to the next step without an explicit check.
   const [consent, setConsent] = useState(false);
   const [consentError, setConsentError] = useState(false);
 
@@ -69,16 +74,20 @@ export function VerifyScreen() {
     e.preventDefault();
     const found = validate();
     setErrors(found);
-    // 미동의면 진행을 막고 이유를 노출한다(페르소나 C — 왜 막혔는지 알린다).
-    // 버튼은 aria-disabled로 비활성 상태를 알리되 클릭 자체는 받아 안내를 띄운다.
+    // Without consent, block progression and surface the reason (persona C —
+    // tell them why they were blocked). The button announces its disabled
+    // state via aria-disabled but still accepts the click so the notice can
+    // be shown.
     const consentMissing = !consent;
     setConsentError(consentMissing);
     if (found.name || found.email || consentMissing) return;
 
-    // 본인 확인·동의 완료 — 신원을 세션에 저장하고 문제 안내로 전진(회원가입 없음).
+    // Identity verification and consent complete — save the identity to the
+    // session and advance to the problem brief (no sign-up).
     setCandidate(token, { name: name.trim(), email: email.trim() });
-    // 게이트 통과 지점에서 동의 여부·시각을 기록한다(멱등, S-3/M-4). 백엔드
-    // 부재로 저장은 localStorage 계층에 머문다(마스터플랜 항목1 의존).
+    // Record consent status and timestamp at the gate-passing point
+    // (idempotent, S-3/M-4). With no backend, storage stays at the
+    // localStorage layer (depends on master plan item 1).
     recordConsent(token);
     navigate(nextStepPath(token, "verify")!);
   }
@@ -90,10 +99,10 @@ export function VerifyScreen() {
   return (
     <div className="flow-screen">
       <div className="split-panel">
-        {/* 좌 — 문제를 훑어 내려가는 연출. 폼과 나란히 두어 맥락을 준다 */}
+        {/* Left — the scanning effect over the problem. Placed beside the form to give context */}
         <ProblemScan />
 
-        {/* 우 — 실제 입력(이름·이메일) */}
+        {/* Right — the actual input (name, email) */}
         <div className="split-panel__form">
           <div className="empty-state empty-state--start">
             <h1 className="empty-state__title">{s.title}</h1>
@@ -153,8 +162,9 @@ export function VerifyScreen() {
               )}
             </div>
 
-            {/* 데이터 열람 동의(S-1) — 입력 아래, 진행 버튼 위. 두 고지를 같은
-               무게로 나눠 싣고(페르소나 B), 체크해야만 다음 단계로 넘어간다. */}
+            {/* Consent to data review (S-1) — below the inputs, above the
+               continue button. Both notices carry equal weight (persona B),
+               and only checking the box allows advancing to the next step. */}
             <div className="verify-consent">
               <p className="verify-consent__title">{s.consentTitle}</p>
               <p className="verify-consent__statement">{s.consentReview}</p>

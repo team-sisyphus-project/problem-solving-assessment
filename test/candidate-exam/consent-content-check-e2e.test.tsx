@@ -1,20 +1,23 @@
 /*
- * S-2 / M-2·M-3 — 동의 카피 콘텐츠 체크 (E2E)
+ * S-2 / M-2·M-3 — Consent copy content check (E2E)
  * ---------------------------------------------------------------------------
- * `consent-gate-e2e.test.tsx`의 렌더 패턴(프로덕션과 동형인 중첩 라우터 위에서
- * 실제 화면을 구동)을 재사용하되, 이 파일은 **콘텐츠와 배치**만 본다. 차단·진행
- * (M-1)이나 저장(M-4)은 다루지 않는다.
+ * Reuses the render pattern of `consent-gate-e2e.test.tsx` (drives the real
+ * screens on top of a nested router isomorphic to production), but this file
+ * looks at **content and placement** only. Blocking/progression (M-1) and
+ * persistence (M-4) are out of scope.
  *
- * 검증 목표(Measure) 대응:
- *   · M-2 — (a) 평가자가 해결 과정 내 입력·산출물까지 열람한다는 안내 문구가
- *           동의 화면에 렌더링된다(텍스트 100% 매칭).
- *   · M-3 — (b) 이 데이터를 LLM 원천 모델 학습 등에 쓰지 않는다는 고지 문구가
- *           (a)와 **같은 폼 안에 동시** 노출된다(텍스트 100% 매칭).
+ * Mapping to the verification goals (Measure):
+ *   · M-2 — (a) the notice that reviewers will review inputs and outputs from
+ *           the solving process is rendered on the consent screen (100% text match).
+ *   · M-3 — (b) the disclosure that this data will not be used for training
+ *           the underlying LLM models etc. is exposed **simultaneously in the
+ *           same form** as (a) (100% text match).
  *
- * 두 문장은 **동등 비중**으로 배치된다: 같은 `.verify-consent__statement` 클래스를
- * 달고, 같은 부모 아래 형제로 나란히 놓인다(어느 한쪽이 다른 쪽에 묻히지 않음 —
- * 페르소나 B). 문구는 모두 i18n(strings)에서 직접 읽어 하드코딩 없이 대조한다.
- * 이 테스트는 테스트 계층 전용이며 프로덕션 코드를 변경하지 않는다.
+ * The two statements are placed with **equal weight**: both carry the same
+ * `.verify-consent__statement` class and sit side by side as siblings under
+ * the same parent (neither is buried inside the other — persona B). All copy
+ * is read directly from i18n (strings) and compared without hardcoding.
+ * This test lives in the test layer only and does not change production code.
  * ---------------------------------------------------------------------------
  */
 
@@ -29,12 +32,13 @@ import { strings } from "../../src/app/i18n";
 const TOKEN = "consent-content-check-e2e-token";
 const verify = strings.screens.verify;
 
-/** (a) 열람 안내 = consentReview, (b) 비학습 고지 = consentNoTraining.
- * 두 문구 모두 strings에서 직접 읽어 대조한다(하드코딩 금지). */
+/** (a) review notice = consentReview, (b) no-training disclosure = consentNoTraining.
+ * Both statements are read directly from strings and compared (no hardcoding). */
 const COPY_A = verify.consentReview;
 const COPY_B = verify.consentNoTraining;
 
-/** 프로덕션과 동형인 중첩 라우트. 콘텐츠만 확인하므로 verify 인덱스만 렌더한다. */
+/** Nested routes isomorphic to production. We only check content, so only the
+ * verify index is rendered. */
 function renderVerify() {
   return render(
     <MemoryRouter initialEntries={[`/invite/${TOKEN}`]}>
@@ -47,55 +51,56 @@ function renderVerify() {
   );
 }
 
-describe("동의 카피 콘텐츠 체크 E2E — (a)(b) 동시 노출·동등 비중 (S-2/M-2·M-3)", () => {
+describe("Consent copy content check E2E — (a)(b) simultaneous exposure with equal weight (S-2/M-2·M-3)", () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
-  it("(a) 열람 안내 문구가 동의 화면에 렌더링된다 — 텍스트 100% 매칭 (M-2)", () => {
+  it("(a) the review notice is rendered on the consent screen — 100% text match (M-2)", () => {
     renderVerify();
-    // strings의 (a) 문구와 화면 텍스트가 정확히 일치하는 요소가 존재한다.
+    // An element exists whose text exactly matches statement (a) from strings.
     const node = screen.getByText(COPY_A);
     expect(node).toBeInTheDocument();
     expect(node.textContent).toBe(COPY_A);
   });
 
-  it("(b) 비학습 고지 문구가 동의 화면에 렌더링된다 — 텍스트 100% 매칭 (M-3)", () => {
+  it("(b) the no-training disclosure is rendered on the consent screen — 100% text match (M-3)", () => {
     renderVerify();
     const node = screen.getByText(COPY_B);
     expect(node).toBeInTheDocument();
     expect(node.textContent).toBe(COPY_B);
   });
 
-  it("(a)(b) 두 문구가 동일한 verify 폼 안에 동시 노출된다 (M-3 동시 노출 100%)", () => {
+  it("(a)(b) both statements are exposed simultaneously within the same verify form (M-3 simultaneous exposure 100%)", () => {
     const { container } = renderVerify();
     const form = container.querySelector("form.verify-form");
     expect(form).not.toBeNull();
 
-    // 같은 폼으로 스코프를 좁혀도 (a)(b)가 둘 다 잡힌다 = 동일 화면 동시 노출.
+    // Even when scoped to the same form, both (a) and (b) are found = simultaneous
+    // exposure on the same screen.
     const scoped = within(form as HTMLElement);
     expect(scoped.getByText(COPY_A)).toBeInTheDocument();
     expect(scoped.getByText(COPY_B)).toBeInTheDocument();
   });
 
-  it("(a)(b)가 같은 .verify-consent__statement 형제 구조로 동등 비중 배치된다 (페르소나 B)", () => {
+  it("(a)(b) are placed with equal weight as siblings sharing the .verify-consent__statement class (persona B)", () => {
     const { container } = renderVerify();
 
-    // 동의 블록 안의 statement 노드만 뽑는다.
+    // Pick out only the statement nodes inside the consent block.
     const statements = Array.from(
       container.querySelectorAll<HTMLElement>(".verify-consent__statement"),
     );
 
-    // 정확히 두 문장이 statement로 실린다(더도 덜도 아님).
+    // Exactly two statements are carried as statements (no more, no less).
     expect(statements).toHaveLength(2);
 
-    // 두 노드의 텍스트가 각각 (a)(b) 문구와 100% 일치한다.
+    // The two nodes' texts match statements (a) and (b) 100% respectively.
     const texts = statements.map((el) => el.textContent);
     expect(texts).toContain(COPY_A);
     expect(texts).toContain(COPY_B);
 
-    // 동등 비중의 근거: 둘 다 같은 클래스이고, 같은 부모 아래 형제다
-    // (한쪽이 다른 쪽에 종속/중첩되지 않는다).
+    // Evidence of equal weight: both have the same class and are siblings
+    // under the same parent (neither is subordinate to or nested in the other).
     const [first, second] = statements;
     expect(first.className).toBe(second.className);
     expect(first.parentElement).not.toBeNull();

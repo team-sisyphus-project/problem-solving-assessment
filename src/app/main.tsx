@@ -1,8 +1,9 @@
 /*
- * 애플리케이션 진입점
+ * Application entry point
  * ---------------------------------------------------------------------------
- * 전역 스타일 로드 순서: 토큰(원시값) → 6 프리미티브 → 셸/내비/화면 레이아웃.
- * 이후 모든 컴포넌트는 raw 값이 아닌 토큰 클래스만 참조한다(하드코딩 0).
+ * Global style load order: tokens (raw values) → the 6 primitives → shell/nav/
+ * screen layouts. Every component thereafter references token classes only,
+ * never raw values (zero hardcoding).
  * ---------------------------------------------------------------------------
  */
 
@@ -10,22 +11,22 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 
-// 디자인 토큰 + 공용 프리미티브(6종) — grain-1/2 산출물
+// Design tokens + shared primitives (6 kinds) — output of grain-1/2
 import "../styles/tokens.css";
 import "../styles/components/index.css";
 
-// 참조 화면(문제 풀이=채팅) Component 스타일 — conversation·message-bubble·composer
+// Reference screen (problem solving = chat) component styles — conversation, message-bubble, composer
 import "../styles/chat.css";
 
-// 이번 grain: 셸 · 내비 · 흐름 화면 레이아웃 (토큰 전용)
+// This grain: shell, nav, and flow screen layouts (tokens only)
 import "./styles/app-shell.css";
 import "./styles/navigation.css";
 import "./styles/screens.css";
 
-// 연출이 붙는 흐름 화면(본인 확인 2단 · 풀이 2단계) 레이아웃
+// Layouts for the flow screens with staged presentation (two-pane identity verification, two-phase solving)
 import "./styles/flow-screens.css";
 
-// 웰컴 인트로(흐름 앞단 전면 히어로) — 셸 밖에서 쓰이는 독립 레이어라 마지막에
+// Welcome intro (full-bleed hero ahead of the flow) — an independent layer used outside the shell, so it loads last
 import "./styles/welcome.css";
 
 import { router } from "./router";

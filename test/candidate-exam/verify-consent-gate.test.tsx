@@ -1,15 +1,21 @@
 /*
- * S-1 / M-1·M-2·M-3 — 본인 확인 단계 데이터 열람 동의 게이트 (E2E)
+ * S-1 / M-1·M-2·M-3 — Identity verification step data consent-to-review gate (E2E)
  * ---------------------------------------------------------------------------
- * 검증 대상(프로덕션 동형 라우터 위에서 실제 클릭으로 구동):
- *   1) 본인 확인 화면에 동의 문구(두 고지) + 체크박스 + 진행 버튼이 함께 노출된다
- *      (M-2: 해결 과정 열람 안내, M-3: LLM 비학습 고지 — 같은 화면 동시 노출).
- *   2) 이름·이메일을 채워도 동의 체크가 없으면 "Confirm and start"가 다음 단계
- *      (문제 안내 brief)로 진행하지 않고 안내 메시지를 띄운다(M-1: 차단 + 페르소나 C).
- *   3) 체크 후 클릭하면 신원이 세션에 저장되고 문제 안내로 전진한다(M-1: 진행).
+ * Under test (driven with real clicks on a router isomorphic to production):
+ *   1) The identity verification screen exposes the consent copy (two
+ *      disclosures) + checkbox + proceed button together (M-2: solving-process
+ *      review notice, M-3: LLM no-training disclosure — simultaneous exposure
+ *      on the same screen).
+ *   2) Even with name and email filled in, without the consent check "Confirm
+ *      and start" does not proceed to the next step (problem brief) and shows
+ *      a guidance message (M-1: blocking + persona C).
+ *   3) After checking and clicking, the identity is saved to the session and
+ *      the flow advances to the problem brief (M-1: progression).
  *
- * 문구/톤은 i18n(strings)에서 직접 읽어 하드코딩 없이 대조한다. 배정 문제 텍스트는
- * 프로덕션 계약(assignProblem)이 반환하는 값으로 확인해 특정 문자열 결합을 피한다.
+ * Copy/tone is read directly from i18n (strings) and compared without
+ * hardcoding. The assigned problem text is checked against the value returned
+ * by the production contract (assignProblem) to avoid coupling to specific
+ * strings.
  * ---------------------------------------------------------------------------
  */
 
@@ -27,9 +33,9 @@ import { getSession } from "../../src/app/session/store";
 const TOKEN = "consent-gate-token";
 const verify = strings.screens.verify;
 
-/** 프로덕션과 동형인 중첩 라우트(AppShell = 레이아웃 + 자식 단계)로 렌더한다.
- * verify 인덱스에서 시작해 동의 통과 후 brief로 실제 navigate가 일어나므로
- * brief 라우트도 포함한다. */
+/** Renders on nested routes isomorphic to production (AppShell = layout +
+ * child steps). Starts at the verify index; a real navigate to brief happens
+ * after the consent passes, so the brief route is included as well. */
 function renderFlowAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[`/invite/${TOKEN}${path}`]}>
@@ -43,7 +49,7 @@ function renderFlowAt(path: string) {
   );
 }
 
-/** 이름·이메일을 유효하게 채운다(동의는 하지 않는다). */
+/** Fills in a valid name and email (does not consent). */
 function fillIdentity() {
   fireEvent.change(screen.getByLabelText(verify.nameLabel), {
     target: { value: "Alex Morgan" },
@@ -53,19 +59,20 @@ function fillIdentity() {
   });
 }
 
-describe("본인 확인 동의 게이트 — 노출·차단·진행 (S-1/M-1·M-2·M-3)", () => {
+describe("Identity verification consent gate — exposure, blocking, progression (S-1/M-1·M-2·M-3)", () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
-  it("동의 화면에 두 고지 문구 + 체크박스 + 진행 버튼이 함께 노출된다 (M-2/M-3)", () => {
+  it("the consent screen exposes both disclosure statements + checkbox + proceed button together (M-2/M-3)", () => {
     renderFlowAt("");
 
-    // (a) 해결 과정 열람 안내와 (b) LLM 비학습 고지가 같은 화면에 동시 노출.
+    // (a) the solving-process review notice and (b) the LLM no-training
+    // disclosure are exposed simultaneously on the same screen.
     expect(screen.getByText(verify.consentReview)).toBeInTheDocument();
     expect(screen.getByText(verify.consentNoTraining)).toBeInTheDocument();
 
-    // 체크박스(동의 컨트롤)와 진행 버튼이 함께 있다.
+    // The checkbox (consent control) and the proceed button are present together.
     expect(
       screen.getByRole("checkbox", { name: verify.consentCheckboxLabel }),
     ).toBeInTheDocument();
@@ -74,11 +81,12 @@ describe("본인 확인 동의 게이트 — 노출·차단·진행 (S-1/M-1·M-
     ).toBeInTheDocument();
   });
 
-  it("동의 체크 없이 진행하면 차단되고 안내가 뜬다 (M-1 차단, 페르소나 C)", () => {
+  it("proceeding without the consent check is blocked and guidance appears (M-1 blocking, persona C)", () => {
     renderFlowAt("");
     fillIdentity();
 
-    // 체크박스는 기본 미선택, 버튼은 비활성 상태를 알린다.
+    // The checkbox is unselected by default and the button announces its
+    // disabled state.
     const checkbox = screen.getByRole("checkbox", {
       name: verify.consentCheckboxLabel,
     });
@@ -87,42 +95,45 @@ describe("본인 확인 동의 게이트 — 노출·차단·진행 (S-1/M-1·M-
       screen.getByRole("button", { name: verify.primaryAction }),
     ).toHaveAttribute("aria-disabled", "true");
 
-    // 미동의 상태에서 진행 시도 — 안내가 뜨고 문제 안내로 넘어가지 않는다.
+    // Attempt to proceed without consent — guidance appears and the flow does
+    // not move on to the problem brief.
     fireEvent.click(screen.getByRole("button", { name: verify.primaryAction }));
 
     expect(screen.getByText(verify.consentRequired)).toBeInTheDocument();
-    // 여전히 본인 확인 화면(폼)이고, 배정 문제 화면은 나타나지 않는다.
+    // Still on the identity verification screen (form), and the assigned
+    // problem screen does not appear.
     expect(screen.getByLabelText(verify.nameLabel)).toBeInTheDocument();
     const assigned = assignProblem(TOKEN);
     expect(
       screen.queryByRole("heading", { name: assigned.title }),
     ).not.toBeInTheDocument();
-    // 신원도 아직 저장되지 않았다.
+    // The identity has not been saved yet either.
     expect(getSession(TOKEN)?.candidate).toBeNull();
   });
 
-  it("동의 체크 후 진행하면 신원이 저장되고 문제 안내로 넘어간다 (M-1 진행)", () => {
+  it("proceeding after the consent check saves the identity and moves on to the problem brief (M-1 progression)", () => {
     renderFlowAt("");
     fillIdentity();
 
     fireEvent.click(
       screen.getByRole("checkbox", { name: verify.consentCheckboxLabel }),
     );
-    // 동의하면 버튼의 비활성 표시가 사라진다.
+    // Consenting removes the button's disabled indication.
     expect(
       screen.getByRole("button", { name: verify.primaryAction }),
     ).not.toHaveAttribute("aria-disabled");
 
     fireEvent.click(screen.getByRole("button", { name: verify.primaryAction }));
 
-    // 배정 문제(brief)로 전진 — 배정 계약이 반환한 문제 제목이 화면에 뜬다.
+    // Advances to the assigned problem (brief) — the problem title returned by
+    // the assignment contract appears on screen.
     const assigned = assignProblem(TOKEN);
     expect(
       screen.getByRole("heading", { name: assigned.title }),
     ).toBeInTheDocument();
-    // 본인 확인 폼은 더 이상 없다.
+    // The identity verification form is gone.
     expect(screen.queryByLabelText(verify.nameLabel)).not.toBeInTheDocument();
-    // 신원이 세션에 저장되었다.
+    // The identity has been saved to the session.
     expect(getSession(TOKEN)?.candidate).toMatchObject({
       name: "Alex Morgan",
       email: "alex@example.com",

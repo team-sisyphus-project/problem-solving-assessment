@@ -1,16 +1,18 @@
 /*
- * ConnectStep — 풀이 1단계: 본인 AI 연결(BYOP)
+ * ConnectStep — solve phase 1: connecting the candidate's own AI (BYOP)
  * ---------------------------------------------------------------------------
- * 예전에는 제공자 선택과 키 입력이 대화창 위에 얹혀 있었다. 처음 온 지원자에게는
- * 그게 "왜 내 키를 넣으라는 거지?"로 읽혀서, 설명을 붙일 자리를 따로 만들었다.
- * 이 단계가 하는 일은 셋이다 — 무엇을 보는 평가인지 밝히고, 그래서 본인 AI를
- * 쓰라고 권하고, 키가 어디에도 저장되지 않는다는 걸 약속한다.
+ * Previously, provider selection and key entry sat on top of the chat window.
+ * To a first-time candidate that read as "why are they asking for my key?",
+ * so a dedicated place for the explanation was made. This phase does three
+ * things — states what this assessment looks at, recommends using one's own
+ * AI for that reason, and promises that the key is never stored anywhere.
  *
- * 건너뛸 수 있다. 다만 건너뛰면 대화를 시작할 수 없으므로, 그 사실을 숨기지 않고
- * 버튼 옆에 그대로 적는다.
+ * It can be skipped. But skipping means the conversation cannot start, and
+ * rather than hiding that fact we state it plainly next to the button.
  *
- * 비밀 경계: 이 컴포넌트는 키를 **상위로 올려 주기만** 하고 스스로 저장하지
- * 않는다. 저장·전송 정책은 SolveScreen 쪽 주석 참조.
+ * Secret boundary: this component only **lifts the key upward** and never
+ * stores it itself. For the storage/transmission policy, see the comments in
+ * SolveScreen.
  * ---------------------------------------------------------------------------
  */
 
@@ -24,9 +26,9 @@ interface ConnectStepProps {
   apiKey: string;
   onProviderChange: (provider: ProviderId) => void;
   onApiKeyChange: (key: string) => void;
-  /** 연결하고 다음 단계로 */
+  /** Connect and move to the next phase */
   onContinue: () => void;
-  /** 연결하지 않고 다음 단계로 */
+  /** Move to the next phase without connecting */
   onSkip: () => void;
 }
 
@@ -71,14 +73,14 @@ export function ConnectStep({
             </button>
           ))}
         </div>
-        {/* 색 단독 금지(원칙 2) — 선택 결과를 항상 텍스트로 병행 */}
+        {/* Never color alone (principle 2) — always accompany the selection result with text */}
         <span className="provider-group__selected" role="status">
           {provider
             ? `${s.providerSelectedPrefix} ${strings.providers[provider]}`
             : s.providerNoneSelected}
         </span>
 
-        {/* 제공자를 고른 뒤에만 키 입력 자리가 열린다 */}
+        {/* The key entry slot only opens after a provider is chosen */}
         <div className="provider-group__connect">
           <span className="provider-group__connect-title">
             {s.keyFieldTitle}

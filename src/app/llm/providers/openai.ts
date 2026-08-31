@@ -1,15 +1,16 @@
 /*
- * OpenAI(GPT) 어댑터 — Chat Completions REST
+ * OpenAI (GPT) adapter — Chat Completions REST
  * ---------------------------------------------------------------------------
- * 브라우저에서 직접 호출. apiKey는 Authorization 헤더로만 전달하고 저장·로그하지
- * 않는다. ChatMessage[](role: user/assistant) → OpenAI messages 로 매핑한다.
+ * Called directly from the browser. apiKey travels only in the Authorization
+ * header and is never stored or logged. ChatMessage[] (role: user/assistant)
+ * is mapped to OpenAI messages.
  * ---------------------------------------------------------------------------
  */
 
 import { postJson } from "../http";
 import { LlmError, type ChatMessage, type ProviderAdapter } from "../types";
 
-/** 구현 설정값(디자인 토큰 아님) — 모델·엔드포인트 */
+/** Implementation settings (not design tokens) — model and endpoint */
 const ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const MODEL = "gpt-4o";
 

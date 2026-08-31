@@ -1,14 +1,16 @@
 /*
- * SC-3 / M-3 — SolveScreen BYOP 배선 (렌더 계약)
+ * SC-3 / M-3 — SolveScreen BYOP wiring (render contract)
  * ---------------------------------------------------------------------------
- * 검증 대상: 풀이 화면이 (1) 빈 대화 초기 상태를 보이고, (2) 선택한 제공자와
- * 지원자가 입력한 본인 API 키로 실제 sendChat을 호출하며, (3) 매 전송마다
- * 사용자 메시지와 응답을 순서대로 누적·유지하고, (4) 응답 대기 상태를 표시하며,
- * (5) 실패를 오류 토스트로 안내하고, (6) 입력한 키를 localStorage/저장 세션에
- * 절대 남기지 않는다.
+ * Under test: the solve screen (1) shows the empty conversation initial state,
+ * (2) calls the real sendChat with the selected provider and the candidate's
+ * own API key, (3) accumulates and retains the user message and reply in order
+ * on every send, (4) shows a pending-reply state, (5) surfaces failures via an
+ * error toast, and (6) never leaves the entered key in localStorage or the
+ * saved session.
  *
- * 어댑터(grain-1)는 경계를 목킹한다 — 이 grain은 "화면↔어댑터 배선"만 검증하고
- * 실제 REST 호출은 어댑터 테스트(llm-adapters.test.ts)가 이미 다룬다.
+ * The adapter (grain-1) is mocked at the boundary — this grain verifies only
+ * the "screen <-> adapter wiring", and real REST calls are already covered by
+ * the adapter tests (llm-adapters.test.ts).
  * ---------------------------------------------------------------------------
  */
 
@@ -16,8 +18,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
-// 어댑터 경계 목킹 — sendChat만 제어하고 LlmError는 실제 클래스를 쓴다.
-// (factory는 파일 최상단으로 hoist되므로 mock 함수도 vi.hoisted로 끌어올린다.)
+// Mock the adapter boundary — control only sendChat; LlmError stays the real class.
+// (The factory is hoisted to the top of the file, so the mock function is
+// lifted with vi.hoisted as well.)
 const { sendChatMock } = vi.hoisted(() => ({ sendChatMock: vi.fn() }));
 vi.mock("../../src/app/llm", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/app/llm")>();
@@ -42,20 +45,21 @@ function renderSolve() {
   );
 }
 
-/** 제공자 선택 → 키 입력 → 본문 입력 → 전송까지 한 번 수행한다. */
+/** Performs one pass of: select provider -> enter key -> type body -> send. */
 function selectProviderAndKey() {
   fireEvent.click(screen.getByRole("button", { name: strings.providers.gpt }));
   const keyField = screen.getByLabelText(
     `${strings.providers.gpt} ${s.keyFieldLabel}`,
   );
   fireEvent.change(keyField, { target: { value: API_KEY } });
-  // 풀이 화면은 1단계(본인 AI 연결) → 2단계(대화)로 나뉜다. 연결을 마쳤으면
-  // "연결하고 계속"으로 대화 단계에 들어간다.
+  // The solve screen is split into phase 1 (connect your own AI) and phase 2
+  // (conversation). Once connected, "Connect and continue" enters the
+  // conversation phase.
   fireEvent.click(screen.getByRole("button", { name: s.phaseConnectAction }));
   return keyField as HTMLInputElement;
 }
 
-/** 연결을 건너뛰고 대화 단계로 넘어간다(AI 미연결 상태). */
+/** Skips connecting and moves to the conversation phase (no AI connected). */
 function skipConnect() {
   fireEvent.click(screen.getByRole("button", { name: s.phaseSkipAction }));
 }
@@ -67,12 +71,12 @@ function sendMessage(text: string) {
   fireEvent.click(screen.getByRole("button", { name: s.sendAction }));
 }
 
-describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
+describe("SolveScreen — BYOP wiring (SC-3/M-3)", () => {
   beforeEach(() => {
     sendChatMock.mockReset();
   });
 
-  it("빈 대화 초기 상태를 표시한다", () => {
+  it("shows the empty conversation initial state", () => {
     renderSolve();
     skipConnect();
     expect(
@@ -80,9 +84,9 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     ).toBeInTheDocument();
   });
 
-  it("키 필드는 password 타입이며 제공자 선택 후에만 열린다", () => {
+  it("the key field has type password and opens only after a provider is selected", () => {
     renderSolve();
-    // 선택 전에는 키 입력 자리가 없다(1단계 안에서 판정).
+    // Before selection there is no key input slot (judged within phase 1).
     expect(
       screen.queryByLabelText(`${strings.providers.gpt} ${s.keyFieldLabel}`),
     ).not.toBeInTheDocument();
@@ -93,7 +97,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     expect(keyField.type).toBe("password");
   });
 
-  it("선택한 제공자·본인 키로 sendChat을 호출하고 응답을 순서대로 누적한다", async () => {
+  it("calls sendChat with the selected provider and own key, accumulating replies in order", async () => {
     sendChatMock
       .mockResolvedValueOnce("first answer")
       .mockResolvedValueOnce("second answer");
@@ -104,7 +108,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     sendMessage("first question");
     expect(await screen.findByText("first answer")).toBeInTheDocument();
 
-    // 첫 호출: 제공자 id + 본인 키 + user 메시지 하나로 매핑.
+    // First call: mapped to provider id + own key + a single user message.
     expect(sendChatMock).toHaveBeenNthCalledWith(1, "gpt", API_KEY, [
       { role: "user", content: "first question" },
     ]);
@@ -112,20 +116,20 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     sendMessage("second question");
     expect(await screen.findByText("second answer")).toBeInTheDocument();
 
-    // 두 번째 호출: 이전 대화가 누적된 전체 로그(user/assistant 교대)로 전달.
+    // Second call: passes the full accumulated log (user/assistant alternating).
     expect(sendChatMock).toHaveBeenNthCalledWith(2, "gpt", API_KEY, [
       { role: "user", content: "first question" },
       { role: "assistant", content: "first answer" },
       { role: "user", content: "second question" },
     ]);
 
-    // 이전 대화가 화면에서 사라지지 않고 유지된다.
+    // The previous conversation stays on screen without disappearing.
     expect(screen.getByText("first question")).toBeInTheDocument();
     expect(screen.getByText("first answer")).toBeInTheDocument();
     expect(screen.getByText("second question")).toBeInTheDocument();
   });
 
-  it("응답 대기 중 '생각 중' 상태를 표시한다", async () => {
+  it("shows a 'thinking' state while awaiting the reply", async () => {
     let resolveReply: (v: string) => void = () => {};
     sendChatMock.mockReturnValueOnce(
       new Promise<string>((resolve) => {
@@ -137,7 +141,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     selectProviderAndKey();
     sendMessage("thinking?");
 
-    // 응답 도착 전: 대기 표시가 보인다.
+    // Before the reply arrives: the pending indicator is visible.
     expect(await screen.findByText(s.pendingText)).toBeInTheDocument();
 
     resolveReply("done");
@@ -147,7 +151,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     expect(screen.getByText("done")).toBeInTheDocument();
   });
 
-  it("호출 실패 시 오류 토스트를 노출한다", async () => {
+  it("surfaces an error toast when the call fails", async () => {
     sendChatMock.mockRejectedValueOnce(new Error("boom"));
 
     renderSolve();
@@ -158,7 +162,7 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     expect(alert).toHaveTextContent(s.errorGeneric);
   });
 
-  it("입력한 API 키를 localStorage/저장 세션에 남기지 않는다", async () => {
+  it("does not leave the entered API key in localStorage or the saved session", async () => {
     sendChatMock.mockResolvedValueOnce("ok");
 
     renderSolve();
@@ -166,12 +170,12 @@ describe("SolveScreen — BYOP 배선 (SC-3/M-3)", () => {
     sendMessage("keep key out of storage");
     await screen.findByText("ok");
 
-    // 저장 세션에는 대화 로그가 남지만 키는 없어야 한다.
+    // The saved session keeps the conversation log but must not contain the key.
     const session = getSession(TOKEN);
     expect(session?.messages.length).toBe(2);
     expect(JSON.stringify(session)).not.toContain(API_KEY);
 
-    // localStorage 전체를 훑어도 키 문자열이 어디에도 없어야 한다.
+    // Sweeping all of localStorage, the key string must be nowhere.
     for (let i = 0; i < window.localStorage.length; i += 1) {
       const k = window.localStorage.key(i)!;
       expect(window.localStorage.getItem(k)).not.toContain(API_KEY);

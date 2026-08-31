@@ -1,16 +1,20 @@
 /*
- * SkyBackdrop — 하늘 배경을 그리는 2D 캔버스 레이어
+ * SkyBackdrop — a 2D canvas layer that paints the sky backdrop
  * ---------------------------------------------------------------------------
- * `skyPainter.ts`의 단일 페인터를 DOM 캔버스에 그린다. 쓰임은 둘이다.
+ * Draws the single painter from `skyPainter.ts` onto a DOM canvas. It has two
+ * uses.
  *
- *   variant="hero" : 웰컴 인트로의 바탕. WebGL이 뜨면 그 위를 3D 캔버스가
- *     덮으므로(같은 그림을 씬 배경으로 다시 그린다) 보이지 않지만, 모션 축소·
- *     WebGL 미지원 환경에서는 이 레이어가 그대로 배경이 된다.
- *   variant="calm" : 흐름 4단계 화면(AppShell)의 바탕. 인트로와 같은 세계를
- *     공유하되 상단을 비워 폼·대화의 가독성을 지킨다.
+ *   variant="hero" : the base of the welcome intro. When WebGL loads, the 3D
+ *     canvas covers it (the same painting is redrawn as the scene background)
+ *     so it is not visible, but in reduced-motion or non-WebGL environments
+ *     this layer remains the backdrop as is.
+ *   variant="calm" : the base of the four flow-step screens (AppShell).
+ *     Shares the same world as the intro but leaves the top empty to preserve
+ *     the readability of forms and conversation.
  *
- * 장식 전용이라 aria-hidden이며 포인터 이벤트를 받지 않는다. 토큰을 읽지 못하면
- * 아무것도 그리지 않고 조용히 비운다 — 배경이 없어도 화면은 그대로 동작한다.
+ * Purely decorative, so it is aria-hidden and receives no pointer events. If
+ * the tokens cannot be read, it paints nothing and stays quietly empty — the
+ * screen works fine without a backdrop.
  * ---------------------------------------------------------------------------
  */
 
@@ -24,7 +28,7 @@ import {
 
 interface SkyBackdropProps {
   variant: SkyVariant;
-  /** 루트에 붙일 클래스 — 화면마다 배치(절대/고정)가 다르다 */
+  /** Class attached to the root — placement (absolute/fixed) differs per screen */
   className: string;
 }
 
@@ -39,7 +43,7 @@ export function SkyBackdrop({ variant, className }: SkyBackdropProps) {
     try {
       palette = readSkyPalette();
     } catch {
-      return; // 토큰 누락 — 배경 없이 진행
+      return; // Missing tokens — proceed without a backdrop
     }
 
     function render() {
@@ -49,7 +53,7 @@ export function SkyBackdrop({ variant, className }: SkyBackdropProps) {
       const height = el.clientHeight;
       if (width === 0 || height === 0) return;
 
-      // 픽셀 밀도는 2배까지만 — 그 이상은 비용만 늘고 눈에 띄지 않는다.
+      // Pixel density capped at 2x — beyond that only cost rises with no visible gain.
       const ratio = Math.min(window.devicePixelRatio, 2);
       el.width = Math.round(width * ratio);
       el.height = Math.round(height * ratio);

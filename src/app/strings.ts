@@ -1,10 +1,11 @@
 /*
- * 문자열 진입점 — 하위 호환 재-내보내기(shim)
+ * Strings entry point — backwards-compatible re-export (shim)
  * ---------------------------------------------------------------------------
- * 문자열 관리는 로케일 키 파일 구조(`i18n/`)로 승격되었다. 정본은
- * `i18n/locales/<locale>.ts` 사전과 `i18n/index.ts` 접근자다.
- * 신규 소비처는 `../i18n`에서 직접 import 한다. 이 파일은 기존 경로
- * (`./strings`)를 깨지 않기 위한 얇은 재-내보내기만 유지한다.
+ * String management has been promoted to the locale key-file structure
+ * (`i18n/`). The canonical sources are the `i18n/locales/<locale>.ts`
+ * dictionaries and the `i18n/index.ts` accessors. New consumers import
+ * directly from `../i18n`. This file only keeps a thin re-export so the
+ * existing path (`./strings`) does not break.
  *
  * Spec: foundations/i18n-strings.md
  * ---------------------------------------------------------------------------
