@@ -55,6 +55,59 @@
   max-width: var(--container-width-sm); /* sizing: 가장 좁은 읽기 폭(집중 입력) */
 }
 
+/* 데이터 열람 동의 블록(verify, S-1) — 입력 아래·진행 버튼 위에 놓이는 게이트.
+   새 톤/색을 만들지 않고 기존 토큰과 프리미티브(.input-field__error)만 조합한다.
+   구분선으로 입력과 분리하고, 두 고지 문단을 같은 무게로 쌓는다. display/flex·
+   flex-shrink 등 구조값만 리터럴이다(하드코딩 0). */
+.verify-consent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: var(--border-width-sm) solid var(--border-subtle);
+}
+
+/* 블록 제목 — 무엇에 동의하는지 알리는 작은 초점 */
+.verify-consent__title {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--text-strong);
+}
+
+/* (a) 열람 안내 · (b) 비학습 고지 — 두 문장을 동등한 본문 위계로(페르소나 B) */
+.verify-consent__statement {
+  margin: 0;
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-default);
+}
+
+/* 체크박스 + 라벨을 한 줄로 묶어 클릭 표적을 라벨 전체로 넓힌다 */
+.verify-consent__check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  cursor: pointer;
+}
+
+/* 네이티브 체크박스를 강조색으로 물들여 흐름 톤과 맞춘다(새 색이 아니라 토큰 재사용) */
+.verify-consent__checkbox {
+  flex-shrink: 0; /* 구조값 — 라벨이 길어도 네모가 눌리지 않게 */
+  width: var(--space-md); /* sizing — 본문 글자와 같은 눈높이의 표적 */
+  height: var(--space-md);
+  margin: 0;
+  accent-color: var(--accent-default);
+  cursor: pointer;
+}
+
+.verify-consent__check-label {
+  font-size: var(--text-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-strong);
+}
+
 /* 배정 문제 안내 카드(brief) — 배정된 문제 1건(제목·설명)을 위계에 맞춰 제시.
    eyebrow(맥락)→제목(초점)→설명(본문)→안내(다음 행동)의 세로 위계로, 화면당
    주요 초점 하나(원칙 3)를 이 카드에 둔다. 모든 디자인 값은 토큰 참조이며,
