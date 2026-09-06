@@ -8,14 +8,9 @@
  *
  * This file implements the Design Spec verbatim; values and names are not
  * changed arbitrarily. To change a value, first amend the corresponding
- * Token Group base in the Design Spec.
- *   - color:        $GENOSIS_SPEC_PATH/token-groups/color/base.md
- *   - typography:   $GENOSIS_SPEC_PATH/token-groups/typography/base.md
- *   - spacing:      $GENOSIS_SPEC_PATH/token-groups/spacing/base.md
- *   - radius:       $GENOSIS_SPEC_PATH/token-groups/radius/base.md
- *   - border:       $GENOSIS_SPEC_PATH/token-groups/border/base.md
- *   - shadow:       $GENOSIS_SPEC_PATH/token-groups/shadow/base.md
- *   - sizing:       $GENOSIS_SPEC_PATH/token-groups/sizing/base.md
+ * Token Group base in the Design Spec, then mirror it here. The seven Token
+ * Groups this file realizes, in the order their sections appear below:
+ *   color, typography, spacing, radius, border, shadow, sizing.
  *
  * Naming follows the semantic role-based pattern in convention.md. Token
  * names never include a specific component's proper name.
