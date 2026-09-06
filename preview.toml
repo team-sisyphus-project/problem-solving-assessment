@@ -1,0 +1,18 @@
+# Run contract for the local preview runtime.
+#
+# Why this file exists: the repo root holds a *source* `index.html` (the Vite
+# entry, which references `/src/app/main.tsx`). Without an explicit manifest,
+# detection can read that file as a plain static site and serve the unbuilt
+# source — the browser would then request a TypeScript module that no static
+# server can compile. Declaring the build-static shape forces the build step
+# and points serving at the produced `dist/`.
+model = "build-static"
+
+[build]
+command = "npm run build"
+
+[serve]
+# Vite's default output directory; kept at the framework default on purpose.
+static_dir = "dist"
+# The runtime injects the listen port here; nothing in this repo hardcodes one.
+port_env = "PORT"

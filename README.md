@@ -142,6 +142,14 @@ npm run preview # serve dist/ on PORT (default 5173)
 - The port comes from the `PORT` environment variable first (no hardcoding).
 - No dummy accounts/seeds (auth and data layers are out of scope for now).
 
+The platform preview follows the same two steps, declared in the root
+`preview.toml`: `model = "build-static"` runs `npm run build` and then serves
+the produced `dist/` on the injected `PORT`. The manifest is not optional here
+— the repo root also holds the *source* `index.html` (the Vite entry that
+points at `/src/app/main.tsx`), and without it detection can mistake this for a
+plain static site and serve the unbuilt source. Keep `preview.toml` in sync
+whenever the build command or the output directory changes.
+
 ## Code Layout
 
 - `src/styles/tokens.css` — design tokens (single source). Screens and
