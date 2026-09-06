@@ -8,9 +8,11 @@ as written before writing any new UI.
 
 - **Why / what** (tone, the three design principles): repo root
   [`DESIGN.md`](../DESIGN.md).
-- **How much** (source of truth for semantic values and structure): Design Spec =
-  `$GENOSIS_SPEC_PATH/`
-  (`index.md` · `convention.md` · `foundations/` · `token-groups/` · `components/`).
+- **How much** (source of truth for semantic values and structure): the
+  **Design Spec**, a versioned artifact maintained outside this repo
+  (`index.md` · `convention.md` · `foundations/` · `token-groups/` ·
+  `components/`). Paths below are relative to the Design Spec root; ask the
+  orchestrator for its location rather than hardcoding one.
 - **How, in code**: this document + the actual files/classes/keys listed below.
 
 > Principle: screens **reference values, never create them.** Colors, spacing,
@@ -37,13 +39,13 @@ etc.) directly in screen or component CSS.
 
   | Token Group | Spec base | Axis covered |
   |---|---|---|
-  | color | `$GENOSIS_SPEC_PATH/token-groups/color/base.md` | color only (surface·text·border·accent·status·overlay-scrim) |
-  | typography | `$GENOSIS_SPEC_PATH/token-groups/typography/base.md` | font-family·size·weight·line-height·letter-spacing |
-  | spacing | `$GENOSIS_SPEC_PATH/token-groups/spacing/base.md` | margin·gap·padding (spacing scale) |
-  | radius | `$GENOSIS_SPEC_PATH/token-groups/radius/base.md` | corner rounding |
-  | border | `$GENOSIS_SPEC_PATH/token-groups/border/base.md` | border/outline **thickness** (border-width) |
-  | shadow | `$GENOSIS_SPEC_PATH/token-groups/shadow/base.md` | elevation shadows |
-  | sizing | `$GENOSIS_SPEC_PATH/token-groups/sizing/base.md` | content container max width |
+  | color | `token-groups/color/base.md` | color only (surface·text·border·accent·status·overlay-scrim) |
+  | typography | `token-groups/typography/base.md` | font-family·size·weight·line-height·letter-spacing |
+  | spacing | `token-groups/spacing/base.md` | margin·gap·padding (spacing scale) |
+  | radius | `token-groups/radius/base.md` | corner rounding |
+  | border | `token-groups/border/base.md` | border/outline **thickness** (border-width) |
+  | shadow | `token-groups/shadow/base.md` | elevation shadows |
+  | sizing | `token-groups/sizing/base.md` | content container max width |
 
 - **Naming**: token names are based on **semantic role** only (`convention.md`).
   No component-specific names (`chat-bubble-bg` ✗); scales share the vocabulary
@@ -73,7 +75,7 @@ etc.) directly in screen or component CSS.
 
 Do not build new buttons, inputs, modals, etc. from scratch for each screen.
 **Reuse** the primitive classes below. The canonical definition of each
-primitive lives at `$GENOSIS_SPEC_PATH/components/<name>/base.md`, the styles in
+primitive lives in the Design Spec at `components/<name>/base.md`, the styles in
 [`src/styles/components/`](../src/styles/components/), and every value
 references only `var(--token)` (zero hardcoding). The barrel
 `components/index.css` loads all six at once.
@@ -91,8 +93,8 @@ references only `var(--token)` (zero hardcoding). The barrel
 
 ### The 3 Reference-Screen (Problem Solving = Chat) Classes
 
-Canonical:
-`$GENOSIS_SPEC_PATH/components/{conversation,message-bubble,composer}/base.md`,
+Canonical (Design Spec):
+`components/{conversation,message-bubble,composer}/base.md`,
 styles: [`src/styles/chat.css`](../src/styles/chat.css). Chat-style screens
 reuse these three.
 
@@ -297,7 +299,7 @@ cannot be expressed with the existing token system
 
 User-facing strings (labels, buttons, notices, errors, placeholders) are
 **never written as literals in code.** Always reference a key. Canonical
-convention: `$GENOSIS_SPEC_PATH/foundations/i18n-strings.md`.
+convention: the Design Spec's `foundations/i18n-strings.md`.
 
 - **Use via keys**: consumers do `import { strings } from "../i18n"` (or the
   backward-compatible `./strings`) and reference
@@ -338,17 +340,17 @@ convention: `$GENOSIS_SPEC_PATH/foundations/i18n-strings.md`.
 
 ## Kickoff Procedure Summary (For Screen-Card Agents)
 
-1. **Read**: `DESIGN.md` (tone, principles) → `$GENOSIS_SPEC_PATH/index.md`
+1. **Read**: `DESIGN.md` (tone, principles) → the Design Spec's `index.md`
    (registered tokens, components, Orphans) → the relevant Token
    Group/Component base → this document.
-2. **Audit**: if `$GENOSIS_SPEC_PATH/audit/{today}.md` does not exist, audit
+2. **Audit**: if the Design Spec's `audit/{today}.md` does not exist, audit
    before working (`policy/audit.md`). Fix any across-the-board mismatches
    within the work scope before coding.
 3. **Code**: follow Rules 1–4 — tokens only, primitive reuse, shell/flow wiring,
    copy via keys. If a definition is missing, build it following existing
    patterns and **record it in the Design Spec** (`policy/recording.md`).
 4. **Record**: when a new token/component/variant is created, record it in
-   `$GENOSIS_SPEC_PATH/` and update `index.md`.
+   the Design Spec and update its `index.md`.
 
 ## Out of Scope (What This Convention Does Not Define)
 

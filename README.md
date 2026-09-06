@@ -124,23 +124,56 @@ submission notice (`screens/PreviousSubmission`) and offer choices.
 
 ## Greenfield Local Run
 
-There is no database, no migrations, no seeds (static frontend SPA). From a
-clean state:
+This app is a **static frontend SPA**. There is no database, no cache, no
+migrations, no seed step, and therefore **no dummy accounts** — nothing has to
+be provisioned before the first screen renders. From a clean checkout, three
+commands are enough:
 
 ```bash
-npm install     # install dependencies
-npm run dev     # dev server (uses the PORT env var, default 5173)
+npm ci                       # install the locked dependency set
+npm run build                # typecheck + static build → dist/
+PORT=8080 npm run preview    # serve dist/ on $PORT
 ```
 
-Production preview:
+Then open the entry URL:
 
-```bash
-npm run build   # typecheck + static build → dist/
-npm run preview # serve dist/ on PORT (default 5173)
+```
+http://localhost:8080/#/invite/demo-2f9c4a
 ```
 
-- The port comes from the `PORT` environment variable first (no hardcoding).
-- No dummy accounts/seeds (auth and data layers are out of scope for now).
+`demo-2f9c4a` is the demo invite token. The token-less root
+(`http://localhost:8080/`) redirects to that same welcome intro, so either URL
+lands on the first screen. The token only scopes browser-local session state
+(name/email, assigned problem, conversation log) — it authenticates nothing and
+grants nothing.
+
+For iterating on the code, `npm run dev` starts the Vite dev server on the same
+`$PORT` with hot reload. `npm run build` is the gate the preview runs, so it is
+the one to trust before handing work off.
+
+### Configuration and Secrets
+
+`PORT` is the **only** environment variable this repository reads, and it is
+read in `vite.config.ts` — nothing else in `src/` touches `process.env` or
+`import.meta.env`. There are no API keys, no connection strings, and no secrets
+of any kind, so there is deliberately no `.env.example` to copy: it would list a
+single variable that a `.env` file cannot actually deliver. `vite.config.ts`
+resolves the port at config-load time, before Vite's dotenv loading runs, so
+`PORT` must come from the **process environment** (`PORT=8080 npm run preview`,
+or injected by the platform). Without it, Vite falls back to its default 5173.
+
+The candidate's own AI connection (BYOP) in the solve step is a screen skeleton
+only; no key is stored, sent, or read from the environment.
+
+### Preview Manifest
+
+The platform preview follows the same two steps, declared in the root
+`preview.toml`: `model = "build-static"` runs `npm run build` and then serves
+the produced `dist/` on the injected `PORT`. The manifest is not optional here
+— the repo root also holds the *source* `index.html` (the Vite entry that
+points at `/src/app/main.tsx`), and without it detection can mistake this for a
+plain static site and serve the unbuilt source. Keep `preview.toml` in sync
+whenever the build command or the output directory changes.
 
 ## Code Layout
 
